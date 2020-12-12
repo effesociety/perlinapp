@@ -1,0 +1,16 @@
+# Proprietà per lo stato "stop"
+properties (Object):
+	potValue (Number) //valore iniziale di denaro nel piatto, di default 0
+
+# NESSUNA proprietà per lo stato "start"
+
+# Proprietà per lo stato "change"
+properties:
+	actualPosition (String) //ID dell'utente attuale
+	actualTimer (JavascriptTimer) //Timer 
+	
+# Proprietà per lo stato "bet"
+	actualPosition (String) //ID dell'utente attuale
+	actualTimer (JavascriptTimer) //Timer 
+	
+# Proprietà per lo stato "showdown"

@@ -1,0 +1,18 @@
+# Struttura Dati "rooms"
+rooms (Object):
+	gameProperties (Object):
+		minBet (Number) //valore della puntata
+		waitingTime (Number) //tempo di attesa
+	gameStatus (Object):
+		currentStatus (String) //stato attuale tra "stop", "setup", "change", "bet", "showdown",
+		deck (Array or Null) //lista delle carte dopo lo shuffling nella fase di setup
+		properties (Object):
+			//proprietà particolari che variano per ogni stato
+	users (Object):
+		username (String)
+		active (Boolean) //Gli utenti non più online vengono comunque mantenuti nella struttura dati
+		status (String) //stato attuale tra "wait", "play", "skip" , "change", "bet", "call", "fold"
+		pocket (Number) //valore di denaro totale
+		position (Number) //Posizione nel tavolo
+		betValue (Number) //Valore puntato durante la fase di bet
+		ws (WebSocket)

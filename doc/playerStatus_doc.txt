@@ -1,0 +1,11 @@
+# Documentazione stato "stop"
+Nello stato stop si attende che i giocatori clicchino sul bottone "Partecipo"/"Non Partecipo" per dare inizio al giro. Le informazioni da mantenere sono quelle relative al buy-in (puntata di ingresso che varia nel caso in cui nella mano precedente vi sia stato un pareggio) e al contenuto del piatto iniziale (diverso da zero nel caso in cui vi sia stato un pareggio nella mano precedente).
+## Messaggi coinvolti:
+- 'start' ('action' tra 'play' e 'skip') [frontend->backend]
+Entrambi i messaggi cambiano 
+
+# Documentazione stato "setup"
+In questo stato deve essere effettuato lo shuffling delle carte e deve essere effettuata la distribuzione delle carte ai giocatori che hanno cliccato "Partecipo".
+## Messaggi coinvolti:
+- 'tableCards' [backend->frontend]
+- 'cards' [backend->frontend]
