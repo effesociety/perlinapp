@@ -1,44 +1,46 @@
-import React from 'react';
+import {useState, useEffect} from 'react';
+import Button from '@material-ui/core/Button';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
-
-//Severity can be one of: 'danger', 'warning', 'info', 'success'
+import { makeStyles } from '@material-ui/core/styles';
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
-const styles ={
+const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
     '& > * + *': {
-      marginTop: "8px",
+      marginTop: theme.spacing(2),
     },
   },
+}));
+
+export default function CustomSnackbar(props) {
+  const classes = useStyles();
+  const [open, setOpen] = useState(false);
+  const {msg, severity} = props;
+
+  useEffect(() => {
+    setOpen(props.open);
+  }, [props])
+
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    props.closeSnackbar();
+  };
+
+  return (
+    <div className={classes.root}>
+      <Snackbar open={open} autoHideDuration={2000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity={severity}>
+          {msg}
+        </Alert>
+      </Snackbar>
+    </div>
+  );
 }
-
-class CustomSnackbar extends React.Component{
-  constructor(props){
-    super(props)
-    this.handleClose = this.handleClose.bind(this)
-  }
-
-  handleClose() {
-    this.props.closeSnackbar()
-  }
-
-  render(){
-
-    return(
-      <div style={styles.root}>
-        <Snackbar open={this.props.open} autoHideDuration={6000} onClose={this.handleClose}>
-          <Alert onClose={this.handleClose} severity={this.props.severity}>
-            {this.props.msg}
-          </Alert>
-        </Snackbar>
-      </div>
-    )
-  }
-}
-
-export default CustomSnackbar

@@ -19,13 +19,13 @@ const Table = (props) =>{
                     return (
                         <Box className="table-cards-box">
                             <Box className="table-cards-img-wrapper">
-                                <img src={CardImages[card]} className="table-cards-img"/>
+                                <img draggable="false" src={CardImages[card]} className="table-cards-img"/>
                             </Box>
                         </Box>
                     )
                 })}
             </Box>
-            <img src={TableImg} className="table-img" />
+            <img draggable="false" src={TableImg} className="table-img" />
         </Box>
     )
 }

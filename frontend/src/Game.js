@@ -16,11 +16,15 @@ const Game = (props) => {
     const [position, setPosition] = useState(props.position);
     const [tableCards, setTableCards] = useState([]);
     const [myCards, setMyCards] = useState([]);
+    const [gameStatus, setGameStatus] = useState('stop');
+    const [gameStatusProps, setGameStatusProps] = useState({});
 
     useEffect(() => {  
         socket.on('newPositions', handleNewPositions);
+        socket.on('pocketUpdate', handlePocketUpdate);
         socket.on('tableCards', handleTableCards);
         socket.on('cards', handleMyCards);
+        socket.on('status', handleStatus);
     });
 
     const handleNewPositions = (json) => {
@@ -33,6 +37,11 @@ const Game = (props) => {
         })
     }
 
+    const handlePocketUpdate = (json) => {
+        const data = JSON.parse(json);
+        setPocket(data.pocket);
+    }
+
     const handleStart = (action) => {
         const data = {
             'action': action
@@ -41,17 +50,40 @@ const Game = (props) => {
     }
 
     const handleTableCards = (json) => {
-        console.log("Got table cards");
         const data = JSON.parse(json);
         const tableCards = data.tableCards;
         setTableCards(tableCards);
     }
 
     const handleMyCards = (json) => {
-        console.log("Got my cards");
         const data = JSON.parse(json);
         const cards = data.cards;
         setMyCards(cards);
+    }
+
+    const handleStatus = (json) => {
+        const data = JSON.parse(json);
+        switch(data.status){
+            case 'change':
+                handleStatusChange(data.numChangeableCards);
+                break;
+            case 'bet':
+                handleStatusBet();
+                break;
+        }
+    }
+
+    const handleStatusChange = (numChangeableCards) => {
+        setGameStatus('change');
+        const nextGameStatusProps = {
+            'numChangeableCards': numChangeableCards
+        }
+        setGameStatusProps(nextGameStatusProps);
+    }
+
+    const handleStatusBet = () => {
+        setGameStatus('bet');
+        setGameStatusProps({});
     }
       
     return (
@@ -65,6 +97,7 @@ const Game = (props) => {
                         Position: {position} <br/>
                         TableCards: {tableCards} <br/>
                         MyCards: {myCards} <br/>
+                        GameStatus: {gameStatus} <br/>
                         <Button variant="contained" color="primary" onClick={() => handleStart('play')}>Partecipa</Button>
                         <Button variant="contained" color="primary" onClick={() => handleStart('skip')}>Skip</Button>
                     </CardContent>
@@ -78,7 +111,7 @@ const Game = (props) => {
                 <Table cards={tableCards} />
             </Box>
             <Box className="cards-box-container">
-                <MyCards cards={myCards} />
+                <MyCards cards={myCards} gameStatus={gameStatus} gameStatusProps={gameStatusProps} />
             </Box>
         </Box>
 

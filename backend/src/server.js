@@ -7,7 +7,7 @@ const validator = require('validator');
 dotenv.config();
 
 const DEFAULT_PORT = process.env.PORT || 5000;
-
+const MAX_NUM_PLAYERS = 9;
 
 
 /*
@@ -51,32 +51,34 @@ io.on('connection',(socket) => {
 			socket.emit('created',JSON.stringify(res));
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
-			const errMsg = "Username non valido (deve essere alfanumerico)";
-			console.log(errMsg);
-			socket.emit('error', JSON.stringify(errMsg));
+			const data = {
+				'errMsg': "Username non valido (deve essere alfanumerico)",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
 		}
 		else if(validator.isNumeric(minBet)){
-			let errMsg = "Costo puntata inserito non valido";
-			console.log(errMsg);
-			socket.emit('error', JSON.stringify(errMsg));
+			const data = {
+				'errMsg': "Costo puntata inserito non valido",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
 		}
 		else if(validator.isNumeric(waitingTime)){
-			let errMsg = "Tempo di attesa inserito non valido";
-			console.log(errMsg);
-			socket.emit('error', JSON.stringify(errMsg));
+			const data = {
+				'errMsg': "Tempo di attesa inserito non valido",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
 		}	
 	})
 
 	socket.on('join', (json) => {
 		const data = JSON.parse(json);
-
-		console.log(data)
-
 		const roomID = data.roomID;
 		const username = data.username;
 
-
-		if(validator.isAlphanumeric(username) && !validator.isEmpty(username) && rooms.getRoom(roomID)){
+		if(validator.isAlphanumeric(username) && !validator.isEmpty(username) && rooms.getRoom(roomID) && rooms.getActivePlayers(roomID) < MAX_NUM_PLAYERS){
 			const res = rooms.addPlayer(roomID, username, socket);
 			rooms.getInfo();
 			console.log("User added to room");
@@ -84,19 +86,30 @@ io.on('connection',(socket) => {
 			socket.emit('joined', JSON.stringify(res));
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
-			let errMsg = "Username non valido (deve essere alfanumerico)";
-			console.log(errMsg);
-			socket.emit('error', JSON.stringify(errMsg));
+			const data = {
+				'errMsg': "Username non valido (deve essere alfanumerico)",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
 		}
 		else if(!rooms.getRoom(roomID)){
-			let errMsg = "Username non valido (deve essere alfanumerico)";
-			console.log(errMsg);
-			socket.emit('error', JSON.stringify(errMsg));
+			const data = {
+				'errMsg': "Room non esistente",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
+		}
+		else if(rooms.getActivePlayers(roomID) >= MAX_NUM_PLAYERS){
+			const data = {
+				'errMsg': "Room piena!",
+			}
+			console.log(data);
+			socket.emit('error', JSON.stringify(data));
 		}
 	})
 
 	socket.on('start', (json) => {
-		if(rooms.getGameStatus(socket.roomID) === "stop" && rooms.getUserStatus(socket.roomID,socket.userID) === 'wait'){
+		if(socket.roomID && socket.userID && rooms.getGameStatus(socket.roomID) === "stop" && rooms.getUserStatus(socket.roomID,socket.userID) === 'wait'){
 			console.log("Receveid start message");
 			const data = JSON.parse(json);
 			rooms.setUserStatus(socket.roomID, socket.userID, data.action);
@@ -111,7 +124,52 @@ io.on('connection',(socket) => {
 					'tableCards': tableCards
 				}
 				io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
+				//Go to next state
+				rooms.startChangeRound(socket.roomID);
+				const numChangeableCards = room.gameStatus.properties.numChangeableCards;
+				const statusData = {
+					'status': 'change',
+					'numChangeableCards': numChangeableCards
+				}
+				io.to(socket.roomID).emit('status', JSON.stringify(statusData));
 			}
+		}
+	})
+
+	socket.on('change', (json) => {
+		if(socket.roomID && socket.userID && rooms.getGameStatus(socket.roomID) === "change" && rooms.getUserStatus(socket.roomID,socket.userID) === 'play' ){
+			const room = rooms.getRoom(socket.roomID);
+			const currentUserPosition = room.gameStatus.properties.currentUserPosition;
+			const user = rooms.getUser(socket.roomID, socket.userID);
+			//Check if is the correct user who sent the message
+			if(user.position === currentUserPosition){
+				console.log("Receveid change message");
+				room.gameStatus.properties.currentUserPosition += 1;
+				const data = JSON.parse(json);
+				rooms.changeCards(socket.roomID, socket.userID, data.cards);
+				rooms.setUserStatus(socket.roomID, socket.userID, 'change');
+
+				const numReadyPlayers = Object.values(room.users).filter(u => u.status === "change").length;
+				if(numReadyPlayers === room.gameStatus.playingThisRound){
+					//Go to next state
+					rooms.startBetRound(socket.roomID);
+					const statusData = {
+						'status': 'bet',
+					}
+					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
+				}
+			}
+		}
+	})
+
+	socket.on('bet', (json) => {
+		const acceptableUserStatus = ['play', 'raise', 'call', 'fold'];
+		if(socket.roomID && socket.userID && rooms.getGameStatus(socket.roomID) === "bet" && acceptableUserStatus.includes(rooms.getUserStatus(socket.roomID,socket.userID))){
+			//Check if correct position
+
+			//Then call a function in rooms.js
+
+			//Then check if the bet round is over and go to next state
 		}
 	})
 
@@ -140,7 +198,6 @@ server.listen(DEFAULT_PORT);
  * *******
  */
 const util = require('util');
-const e = require('express');
 
 app.get('/rooms', (req, res) => {
 	const json = Object.assign(rooms);

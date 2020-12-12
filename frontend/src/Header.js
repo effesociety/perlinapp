@@ -6,7 +6,7 @@ const Header = () =>  {
         <header className="header">
             <Grid container direction="row" justify="center" alignItems="center" m={4}>
                 <Grid item>
-                    <img src={Logo} className="logo"/>
+                    <img draggable="false" src={Logo} className="logo"/>
                 </Grid>
             </Grid>
       </header>

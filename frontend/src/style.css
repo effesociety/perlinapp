@@ -87,20 +87,31 @@ Game.js
 
 .my-cards-h2{
     color: #fff;
+    margin-bottom: 35px!important;
 }
 
 .card-img-wrapper{
     width:112px;
     height:200px;
     border-radius:5px;
-    border:6px solid rgb(133, 133, 133);
+    border:10px solid rgb(133, 133, 133);
     background-color: #fff;
     cursor: pointer;
     margin:auto;
 }
 
 .card-img-wrapper:hover{
-    border: 6px solid rgb(63, 139, 238);
+    border: 10px solid rgb(63, 139, 238);
+}
+
+.card-img-wrapper-selected{
+    width:112px;
+    height:200px;
+    border-radius:5px;
+    border: 10px solid rgb(29, 95, 182);
+    background-color: #fff;
+    cursor: pointer;
+    margin:auto;
 }
 
 .card-img{
@@ -114,13 +125,26 @@ Game.js
     display:flex;
     margin:auto;
     margin-top:20px;
+    margin-bottom: 20px;
 }
 
 .actions-btn{
     flex:1;
     margin:0 20px!important;
+    padding:10px 0!important;
 }
 
+.bet-input-box{
+    width:calc(100% - 40px);
+    margin-left:20px;
+}
+
+#bet-value{
+    background-color: #fff;
+    width: calc(100% - 20px)!important;
+    left:20px;
+    margin:auto;
+}
 /*
 Footer
 */
