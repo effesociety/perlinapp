@@ -171,6 +171,15 @@ io.on('connection',(socket) => {
 					}
 					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 				}
+				else{
+					//Find next player that has to change
+					const index = room.gameStatus.properties.currentUserPosition;
+					const nextPlayer = rooms.getOrderedPlayers(socket.roomID, 'play')[index];
+					const turnData = {
+						'turn': nextPlayer.username
+					}
+					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
+				}
 			}
 		}
 	})
@@ -203,6 +212,10 @@ io.on('connection',(socket) => {
 				if(numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === room.gameStatus.playingThisRound){
 					//Go to next state
 					console.log("Bet phase is over");
+				}
+				else{
+					//Find next player that has to bet
+
 				}
 				
 			}

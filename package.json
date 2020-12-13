@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"description": "PerlinApp - The only app to play Perlina online",
 	"scripts": {
-		"start": "node backend/src/server.js",
+		"start": "cd backend/src && npm start",
 		"heroku-postbuild": "cd backend && npm install && cd ../frontend && npm install --only=dev && npm install && npm run build"
 	},
 	"engines": {
