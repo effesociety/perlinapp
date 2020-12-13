@@ -13,18 +13,22 @@ import Table from './Table';
 const Game = (props) => {
     const {roomID, username} = props;
     const [pocket, setPocket] = useState(props.pocket);
+    const [potValue, setPotValue] = useState(0);
     const [position, setPosition] = useState(props.position);
     const [tableCards, setTableCards] = useState([]);
     const [myCards, setMyCards] = useState([]);
     const [gameStatus, setGameStatus] = useState('stop');
     const [gameStatusProps, setGameStatusProps] = useState({});
+    const [isMyTurn, SetIsMyTurn] = useState(false);
 
     useEffect(() => {  
         socket.on('newPositions', handleNewPositions);
         socket.on('pocketUpdate', handlePocketUpdate);
+        socket.on('potValueUpdate', handlePotValueUpdate);
         socket.on('tableCards', handleTableCards);
         socket.on('cards', handleMyCards);
         socket.on('status', handleStatus);
+        socket.on('turn', handleTurn);
     });
 
     const handleNewPositions = (json) => {
@@ -40,6 +44,11 @@ const Game = (props) => {
     const handlePocketUpdate = (json) => {
         const data = JSON.parse(json);
         setPocket(data.pocket);
+    }
+
+    const handlePotValueUpdate = (json) => {
+        const data = JSON.parse(json);
+        setPotValue(data.potValue);
     }
 
     const handleStart = (action) => {
@@ -68,7 +77,7 @@ const Game = (props) => {
                 handleStatusChange(data.numChangeableCards);
                 break;
             case 'bet':
-                handleStatusBet();
+                handleStatusBet(data.currentBet);
                 break;
         }
     }
@@ -81,9 +90,29 @@ const Game = (props) => {
         setGameStatusProps(nextGameStatusProps);
     }
 
-    const handleStatusBet = () => {
+    const handleStatusBet = (currentBet) => {
         setGameStatus('bet');
-        setGameStatusProps({});
+        const nextGameStatusProps = {
+            'currentBet': currentBet
+        }
+        setGameStatusProps(nextGameStatusProps);
+    }
+
+    const handleTurn = (json) => {
+        const data = JSON.parse(json);
+
+        console.log("Got turn message");
+        console.log(data);
+        console.log(username)
+
+        console.log(data.turn === username)
+
+        if(data.turn === username){
+            SetIsMyTurn(true);
+        }
+        else{
+            SetIsMyTurn(false);
+        }
     }
       
     return (
@@ -94,10 +123,12 @@ const Game = (props) => {
                         RoomID: {roomID} <br/>
                         Username: {username} <br/>
                         Pocket: {pocket} <br/>
+                        PotValue: {potValue} <br/>
                         Position: {position} <br/>
                         TableCards: {tableCards} <br/>
                         MyCards: {myCards} <br/>
                         GameStatus: {gameStatus} <br/>
+                        IsMyTurn: {isMyTurn ? ("True") : ("False")} <br/>
                         <Button variant="contained" color="primary" onClick={() => handleStart('play')}>Partecipa</Button>
                         <Button variant="contained" color="primary" onClick={() => handleStart('skip')}>Skip</Button>
                     </CardContent>
@@ -111,7 +142,7 @@ const Game = (props) => {
                 <Table cards={tableCards} />
             </Box>
             <Box className="cards-box-container">
-                <MyCards cards={myCards} gameStatus={gameStatus} gameStatusProps={gameStatusProps} />
+                <MyCards cards={myCards} gameStatus={gameStatus} gameStatusProps={gameStatusProps} isMyTurn={isMyTurn} />
             </Box>
         </Box>
 

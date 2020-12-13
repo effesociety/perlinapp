@@ -132,6 +132,14 @@ io.on('connection',(socket) => {
 					'numChangeableCards': numChangeableCards
 				}
 				io.to(socket.roomID).emit('status', JSON.stringify(statusData));
+				//Find first player that has to change
+				const firstPlayer = rooms.getOrderedPlayers(socket.roomID, 'play')[0];
+				const turnData = {
+					'turn': firstPlayer.username
+				}
+				console.log("The first player that has to change is")
+				console.log(turnData);
+				io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 			}
 		}
 	})
@@ -144,32 +152,62 @@ io.on('connection',(socket) => {
 			//Check if is the correct user who sent the message
 			if(user.position === currentUserPosition){
 				console.log("Receveid change message");
-				room.gameStatus.properties.currentUserPosition += 1;
 				const data = JSON.parse(json);
 				rooms.changeCards(socket.roomID, socket.userID, data.cards);
-				rooms.setUserStatus(socket.roomID, socket.userID, 'change');
 
-				const numReadyPlayers = Object.values(room.users).filter(u => u.status === "change").length;
+				const numReadyPlayers = rooms.getStatusPlayers(socket.roomID, "change");
 				if(numReadyPlayers === room.gameStatus.playingThisRound){
 					//Go to next state
 					rooms.startBetRound(socket.roomID);
 					const statusData = {
 						'status': 'bet',
+						'currentBet': 0
 					}
 					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
+					//Find first player that has to bet
+					const firstPlayer = rooms.getOrderedPlayers(socket.roomID, 'change')[0];
+					const turnData = {
+						'turn': firstPlayer.username
+					}
+					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 				}
 			}
 		}
 	})
 
 	socket.on('bet', (json) => {
-		const acceptableUserStatus = ['play', 'raise', 'call', 'fold'];
+		const acceptableUserStatus = ['change', 'raise', 'call', 'fold'];
 		if(socket.roomID && socket.userID && rooms.getGameStatus(socket.roomID) === "bet" && acceptableUserStatus.includes(rooms.getUserStatus(socket.roomID,socket.userID))){
 			//Check if correct position
+			const room = rooms.getRoom(socket.roomID);
+			const user = rooms.getUser(socket.roomID, socket.userID);
+			const currentUserPosition = room.gameStatus.properties.currentUserPosition;
+			if(user.position === currentUserPosition){
+				console.log("Received bet message");
+				const data = JSON.parse(json);
+				rooms.handleBet(socket.roomID, socket.userID, data);
 
-			//Then call a function in rooms.js
+				if(data.action === "raise"){
+					const statusData = {
+						'status': 'bet',
+						'currentBet': room.gameStatus.properties.currentBet
+					}
+					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
+				}
 
-			//Then check if the bet round is over and go to next state
+				//Check if the bet round is over and go to next state
+				const numFoldedPlayers = rooms.getStatusPlayers(socket.roomID, "fold");
+				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call");
+				const numRaisePlayers = rooms.getStatusPlayers(socket.roomID, "raise");
+
+				if(numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === room.gameStatus.playingThisRound){
+					//Go to next state
+					console.log("Bet phase is over");
+				}
+				
+			}
+
+
 		}
 	})
 

@@ -1,6 +1,6 @@
 {
 	"name": "perlinapp",
-	"version": "1.0",
+	"version": "1.0.0",
 	"description": "PerlinApp - The only app to play Perlina online",
 	"scripts": {
 		"start": "node backend/src/server.js",

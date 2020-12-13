@@ -43,10 +43,10 @@ class Rooms{
         return Object.values(this.data[roomID].users).filter(user => user.active && user.status === status).length;
     }
 
-    getOrderedPlayers(roomID){
+    getOrderedPlayers(roomID, status){
         let data = [];
         const room = this.getRoom(roomID);
-        const numPlayers = this.getStatusPlayers(roomID, 'play');
+        const numPlayers = this.getStatusPlayers(roomID, status);
         for(let i = 0; i < numPlayers; i++){
             Object.values(room.users).forEach(user => {
                 if(user.position === i+1){
@@ -202,7 +202,7 @@ class Rooms{
         room.gameStatus.deck = shuffleArray(deck);
         //Dealing cards
         room.gameStatus.playingThisRound = this.getStatusPlayers(roomID, 'play');
-        const orderedPlayers = this.getOrderedPlayers(roomID);
+        const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
         orderedPlayers.forEach(player => {
             //Send cards and...
@@ -214,13 +214,17 @@ class Rooms{
             player.ws.emit('cards',JSON.stringify(cardsData));
             //...take money
             //TO-DO: Handle draw in previous match
-            player.pocket -= room.gameProperties.minBet;
+            player.pocket -= parseFloat(room.gameProperties.minBet);
             room.gameStatus.potValue += parseFloat(room.gameProperties.minBet);
             const pocketData = {
                 'pocket': player.pocket
             }
             player.ws.emit('pocketUpdate', JSON.stringify(pocketData));
-        })
+            const potValueData = {
+                'potValue': room.gameStatus.potValue
+            }
+            player.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+        })        
     }
 
     startChangeRound(roomID){
@@ -238,6 +242,7 @@ class Rooms{
 
     changeCards(roomID, userID, cards){
         const room = this.getRoom(roomID);
+        room.gameStatus.properties.currentUserPosition += 1;
         const user = this.getUser(roomID, userID);
         const playingThisRound = room.gameStatus.playingThisRound;
 
@@ -250,7 +255,7 @@ class Rooms{
                 user.currentCards.splice(cardIndex,1,cardToAdd);
                 room.gameStatus.properties.numCardsChanged += 1;
                 //Take points for changing card
-                user.pocket -= room.gameProperties.minBet;
+                user.pocket -= parseFloat(room.gameProperties.minBet);
                 room.gameStatus.potValue += parseFloat(room.gameProperties.minBet);
             }
         }
@@ -258,6 +263,15 @@ class Rooms{
             'cards': user.currentCards
         }
         user.ws.emit('cards',JSON.stringify(cardsData));
+        const pocketData = {
+            'pocket': user.pocket
+        }
+        user.ws.emit('pocketUpdate', JSON.stringify(pocketData));
+        const potValueData = {
+            'potValue': room.gameStatus.potValue
+        }
+        user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+        this.setUserStatus(roomID, userID, 'change');
     }
 
     startBetRound(roomID){
@@ -269,6 +283,42 @@ class Rooms{
         }
     }
 
+    handleBet(roomID, userID, data){
+        const room = this.getRoom(roomID);
+        room.gameStatus.properties.currentUserPosition += 1;
+        const user = this.getUser(roomID, userID);
+        const action = data.action;
+        if(action === "raise" && data.value && data.value > room.gameStatus.properties.currentBet){
+            room.gameStatus.properties.currentBet = parseFloat(data.value);
+            //Take points for raising
+            user.pocket -= parseFloat(data.value);
+            room.gameStatus.potValue += parseFloat(data.value);
+            const pocketData = {
+                'pocket': user.pocket
+            }
+            user.ws.emit('pocketUpdate', JSON.stringify(pocketData));
+            const potValueData = {
+                'potValue': room.gameStatus.potValue
+            }
+            user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+        }
+        else if(action === "call" && room.gameStatus.properties.currentBet > 0){
+            //Take points for calling
+            const currentBet = room.gameStatus.properties.currentBet;
+            user.pocket -= parseFloat(currentBet);
+            room.gameStatus.potValue += parseFloat(currentBet);
+            const pocketData = {
+                'pocket': user.pocket
+            }
+            user.ws.emit('pocketUpdate', JSON.stringify(pocketData));
+            const potValueData = {
+                'potValue': room.gameStatus.potValue
+            }
+            user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+        }
+
+        this.setUserStatus(roomID, userID, action);
+    }
 }
 
 exports.rooms = new Rooms();
