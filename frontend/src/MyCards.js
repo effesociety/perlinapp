@@ -6,6 +6,7 @@ import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import 'animate.css/animate.css'
 
 const MyCards = (props) =>{
     const [cards, setCards] = useState([]);
@@ -24,7 +25,7 @@ const MyCards = (props) =>{
     }, [props]);
 
     const handleClickCard = (card) => {
-        if(props.gameStatus && props.gameStatus === "change" && props.gameStatusProps.numChangeableCards){
+        if(props.gameStatus && props.gameStatus === "change" && props.gameStatusProps.numChangeableCards && props.isMyTurn){
             const numChangeableCards = props.gameStatusProps.numChangeableCards;
             const nextSelectedCards = Array.from(selectedCards);
             if(selectedCards.includes(card)){
@@ -66,8 +67,12 @@ const MyCards = (props) =>{
     }
 
     return (
-        <Container>
-            <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>Le tue carte</Typography>
+        <Container className="animate__animated animate__slideInUp">
+            {cards.length === 0 ? (
+                <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>La mano deve ancora iniziare...</Typography>
+            ) : (
+                <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>Le tue carte</Typography>
+            )}
             <Box className="card-wrapper-box">
                 {cards.map(card => {
 

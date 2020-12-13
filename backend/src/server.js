@@ -17,7 +17,7 @@ const MAX_NUM_PLAYERS = 9;
 ****************
 */
 if(process.env.NODE_ENV === "production"){
-	const CLIENT_BUILD_PATH = path.join(__dirname, "../frontend/build");
+	const CLIENT_BUILD_PATH = path.join(__dirname, "../../frontend/build");
 
 	// Static files
 	app.use(express.static(CLIENT_BUILD_PATH));
@@ -50,6 +50,13 @@ io.on('connection',(socket) => {
 			console.log("New room created");
 			console.log(res);
 			socket.emit('created',JSON.stringify(res));
+
+			
+			const newPositions = rooms.getPositionsData(socket.roomID);
+			console.log("Emitting new positions");
+			console.log(newPositions);
+			io.to(socket.roomID).emit('newPositions', JSON.stringify(newPositions));
+			
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
 			const data = {
@@ -85,6 +92,13 @@ io.on('connection',(socket) => {
 			console.log("User added to room");
 			console.log(res);
 			socket.emit('joined', JSON.stringify(res));
+			
+			
+			const newPositions = rooms.getPositionsData(socket.roomID);
+			console.log("Emitting new positions");
+			console.log(newPositions);
+			io.to(socket.roomID).emit('newPositions', JSON.stringify(newPositions));
+			
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
 			const data = {
@@ -150,14 +164,15 @@ io.on('connection',(socket) => {
 			const room = rooms.getRoom(socket.roomID);
 			const currentUserPosition = room.gameStatus.properties.currentUserPosition;
 			const user = rooms.getUser(socket.roomID, socket.userID);
+			const nextUser = room.gameStatus.playingThisRound[currentUserPosition];
 			//Check if is the correct user who sent the message
-			if(user.position === currentUserPosition){
+			if(user.username === nextUser){
 				console.log("Receveid change message");
 				const data = JSON.parse(json);
 				rooms.changeCards(socket.roomID, socket.userID, data.cards);
 
 				const numReadyPlayers = rooms.getStatusPlayers(socket.roomID, "change");
-				if(numReadyPlayers === room.gameStatus.playingThisRound){
+				if(numReadyPlayers === room.gameStatus.playingThisRound.length){
 					//Go to next state
 					rooms.startBetRound(socket.roomID);
 					const statusData = {
@@ -174,10 +189,10 @@ io.on('connection',(socket) => {
 				}
 				else{
 					//Find next player that has to change
-					const index = room.gameStatus.properties.currentUserPosition;
-					const nextPlayer = rooms.getOrderedPlayers(socket.roomID, 'play')[index];
+					const nextUserPosition = room.gameStatus.properties.currentUserPosition
+					const nextPlayer = room.gameStatus.playingThisRound[nextUserPosition];
 					const turnData = {
-						'turn': nextPlayer.username
+						'turn': nextPlayer
 					}
 					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 				}
@@ -192,7 +207,9 @@ io.on('connection',(socket) => {
 			const room = rooms.getRoom(socket.roomID);
 			const user = rooms.getUser(socket.roomID, socket.userID);
 			const currentUserPosition = room.gameStatus.properties.currentUserPosition;
-			if(user.position === currentUserPosition){
+			const nextUser = room.gameStatus.playingThisRound[currentUserPosition];
+			
+			if(user.username === nextUser){
 				console.log("Received bet message");
 				const data = JSON.parse(json);
 				rooms.handleBet(socket.roomID, socket.userID, data);
@@ -210,15 +227,25 @@ io.on('connection',(socket) => {
 				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call");
 				const numRaisePlayers = rooms.getStatusPlayers(socket.roomID, "raise");
 
-				if(numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === room.gameStatus.playingThisRound){
+				if(numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === room.gameStatus.playingThisRound.length){
 					//Go to next state
-					console.log("Bet phase is over");
+					rooms.startShowdown(socket.roomID);
+					const statusData = {
+						'status': 'showdown',
+						'isDraw': room.gameStatus.properties.isDraw,
+						'winner': room.gameStatus.properties.winner
+					}
+					io.to(socket.roomID).emit('status',JSON.stringify(statusData));
 				}
 				else{
 					//Find next player that has to bet
-
+					const nextUserPosition = room.gameStatus.properties.currentUserPosition
+					const nextPlayer = room.gameStatus.playingThisRound[nextUserPosition];
+					const turnData = {
+						'turn': nextPlayer
+					}
+					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 				}
-				
 			}
 
 
@@ -230,7 +257,7 @@ io.on('connection',(socket) => {
 		if(socket.roomID && socket.userID){
 			const roomActive = rooms.removePlayer(socket.roomID,socket. userID);
 			if(roomActive){
-				const newPositions = rooms.getNewPositionsData(socket.roomID);
+				const newPositions = rooms.getPositionsData(socket.roomID);
 				console.log("Emitting new positions");
 				console.log(newPositions);
 				io.to(socket.roomID).emit('newPositions', JSON.stringify(newPositions));

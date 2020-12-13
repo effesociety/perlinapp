@@ -23,7 +23,7 @@ class Rooms{
         return this.data[roomID].users[userID];
     }
 
-    getNewPositionsData(roomID){
+    getPositionsData(roomID){
         const room = this.getRoom(roomID);
         let data = {}
 
@@ -55,6 +55,14 @@ class Rooms{
             })
         }
         return data;
+    }
+
+    setPlayingThisRound(roomID){
+        const room = this.getRoom(roomID);
+        let users = this.getOrderedPlayers(roomID, 'play');
+        users.forEach(user => {
+            room.gameStatus.playingThisRound.push(user.username);
+        })
     }
 
     getTableCards(roomID){
@@ -93,7 +101,7 @@ class Rooms{
                         'currentStatus': 'stop',
                         'deck': null,
                         'potValue': 0,
-                        'playingThisRound': 0,
+                        'playingThisRound': [],
                         'properties': {
                         }
                     },
@@ -196,12 +204,56 @@ class Rooms{
         }
     }
 
+    calculateScore(cards){
+        let score = 0; 
+        let figureValue = 10;
+        for(const card of cards){
+            let value = parseInt(card.substring(1));
+            if(value < 8){
+                score += value;
+            }
+            else{
+                score +=  figureValue;
+            }
+        }
+        return score;
+    }
+
+    setShowdownProps(room, scoreOnTheFloor){
+        let winners = [];
+        let winnerDifference = 31; //default value for diff
+
+        const playingThisRound = room.gameStatus.playingThisRound;
+
+        Object.values(room.users).forEach(user => {
+            if(playingThisRound.includes(user.username)){
+                let userScore = this.calculateScore(user.currentCards);
+                let difference = Math.abs(userScore - scoreOnTheFloor);
+                if(difference < winnerDifference){
+                    winnerDifference = difference;
+                    winners = [user];
+                }
+                else if(difference === winnerDifference){
+                    winners.push(user);
+                }
+            }
+        })
+
+        const isDraw = winners.length > 1 ? true : false;
+        room.gameStatus.properties = {
+            'score':  scoreOnTheFloor,
+            'isDraw': isDraw,
+            'winners': winners
+        }
+    }
+
     roundSetup(roomID){
         const room = this.getRoom(roomID);
         room.gameStatus.currentStatus = 'setup';
         room.gameStatus.deck = shuffleArray(deck);
         //Dealing cards
-        room.gameStatus.playingThisRound = this.getStatusPlayers(roomID, 'play');
+        //room.gameStatus.playingThisRound = this.getStatusPlayers(roomID, 'play');
+        this.setPlayingThisRound(roomID);
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
         orderedPlayers.forEach(player => {
@@ -231,10 +283,10 @@ class Rooms{
         const room = this.getRoom(roomID);
         room.gameStatus.currentStatus = 'change';
         //Getting num players to calculate how many cards are changeable
-        const numPlayers = room.gameStatus.playingThisRound
+        const numPlayers = room.gameStatus.playingThisRound.length
         const numChangeableCards = numPlayers <= 7 ? 2 : 1;
         room.gameStatus.properties = {
-            'currentUserPosition': 1, 
+            'currentUserPosition': 0, 
             'numChangeableCards': numChangeableCards,
             'numCardsChanged': 0
         }
@@ -244,10 +296,10 @@ class Rooms{
         const room = this.getRoom(roomID);
         room.gameStatus.properties.currentUserPosition += 1;
         const user = this.getUser(roomID, userID);
-        const playingThisRound = room.gameStatus.playingThisRound;
+        const numPlayers = room.gameStatus.playingThisRound.length;
 
         for(const card of cards){
-            const deckPointer = 3 + (3*playingThisRound) + room.gameStatus.properties.numCardsChanged;
+            const deckPointer = 3 + (3*numPlayers) + room.gameStatus.properties.numCardsChanged;
             //Check if the user has the card
             if(user.currentCards.includes(card)){
                 const cardToAdd = room.gameStatus.deck[deckPointer];
@@ -278,14 +330,19 @@ class Rooms{
         const room = this.getRoom(roomID);
         room.gameStatus.currentStatus = 'bet';
         room.gameStatus.properties = {
-            'currentUserPosition': 1,
+            'currentUserPosition': 0,
             'currentBet': 0,
         }
     }
 
     handleBet(roomID, userID, data){
         const room = this.getRoom(roomID);
+        const numPlayers = room.gameStatus.playingThisRound.length;
         room.gameStatus.properties.currentUserPosition += 1;
+        if(room.gameStatus.properties.currentUserPosition === numPlayers){
+            room.gameStatus.properties.currentUserPosition = 0;
+        }
+
         const user = this.getUser(roomID, userID);
         const action = data.action;
         if(action === "raise" && data.value && data.value > room.gameStatus.properties.currentBet){
@@ -318,6 +375,14 @@ class Rooms{
         }
 
         this.setUserStatus(roomID, userID, action);
+    }
+
+    startShowdown(roomID){
+        const room = this.getRoom(roomID);
+        const cardsOnTheFloor = [deck[0], deck[1], deck[2]];
+        const scoreOnTheFloor = this.calculateScore(cardsOnTheFloor);      
+        room.gameStatus.currentStatus = 'showdown';
+        this.setShowdownProps(room, scoreOnTheFloor);
     }
 }
 

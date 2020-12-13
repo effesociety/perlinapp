@@ -74,6 +74,50 @@ Game.js
     border-radius:5px;
 }
 
+.players-position{
+    color:#fff;
+    font-size: 1rem;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.39);
+    border-radius:100%;
+    width:4vw;
+    height:4vw;
+}
+
+.players-position > *{
+    line-height: 4vw!important;
+}
+
+.players-position-1{
+    margin-top:14vh;
+    left: 64.5%;
+    transform: rotate(35deg)
+}
+
+.players-position-2{
+    margin-top:33vh;
+    left: 75%;
+    transform: rotate(70deg)
+}
+
+.players-position-3{
+    margin-top:56vh;
+    left: 75%;
+    transform: rotate(110deg)
+}
+
+.players-position-4{
+    margin-top:75vh;
+    left: 64.5%;
+    transform: rotate(150deg)
+}
+
+.players-position-5{
+    margin-top:82vh;
+    left: 47%;
+    transform: rotate(180deg)
+}
+
 .card-wrapper-box{
     width:100%;
     margin:auto;
@@ -132,6 +176,10 @@ Game.js
     flex:1;
     margin:0 20px!important;
     padding:10px 0!important;
+}
+
+.actions-btn:disabled{
+    background-color: #949494!important;
 }
 
 .bet-input-box{

@@ -12,6 +12,7 @@ import Table from './Table';
 
 const Game = (props) => {
     const {roomID, username} = props;
+    const [players, setPlayers] = useState({})
     const [pocket, setPocket] = useState(props.pocket);
     const [potValue, setPotValue] = useState(0);
     const [position, setPosition] = useState(props.position);
@@ -34,6 +35,10 @@ const Game = (props) => {
     const handleNewPositions = (json) => {
         console.log("Got new positions")
         const data = JSON.parse(json);
+        //Set players for visualization
+        console.log(data)
+        setPlayers(data);
+        //TO-DO: Verify if this is still needed
         Object.keys(data).forEach(u => {
             if(u === username){
                 setPosition(data[u]);
@@ -79,6 +84,9 @@ const Game = (props) => {
             case 'bet':
                 handleStatusBet(data.currentBet);
                 break;
+            case 'showdown':
+                handleStatusShowdown(data.isDraw, data.winner);
+                break;
         }
     }
 
@@ -96,6 +104,11 @@ const Game = (props) => {
             'currentBet': currentBet
         }
         setGameStatusProps(nextGameStatusProps);
+    }
+
+    const handleStatusShowdown = (isDraw, winner) => {
+        setGameStatus('showdown');
+        //Well a lot needs to be done here!
     }
 
     const handleTurn = (json) => {
@@ -139,7 +152,7 @@ const Game = (props) => {
 
 
             <Box className="table-box-container">
-                <Table cards={tableCards} />
+                <Table cards={tableCards} players={players} />
             </Box>
             <Box className="cards-box-container">
                 <MyCards cards={myCards} gameStatus={gameStatus} gameStatusProps={gameStatusProps} isMyTurn={isMyTurn} />
