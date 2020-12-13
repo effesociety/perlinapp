@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const validator = require('validator');
+const path = require('path');
 dotenv.config();
 
 const DEFAULT_PORT = process.env.PORT || 5000;
@@ -23,7 +24,7 @@ if(process.env.NODE_ENV === "production"){
 
 	// Server React Client
 	app.get("/", function(req, res) {
-	res.sendFile(path.join(CLIENT_BUILD_PATH , "index.html"));
+		res.sendFile(path.join(CLIENT_BUILD_PATH , "index.html"));
 	});
 }
 
@@ -248,8 +249,6 @@ server.listen(DEFAULT_PORT);
  * DEBUG *
  * *******
  */
-const util = require('util');
-
 app.get('/rooms', (req, res) => {
 	const json = Object.assign(rooms);
 	Object.values(json.data).forEach(room => {
