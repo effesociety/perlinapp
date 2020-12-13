@@ -87,6 +87,9 @@ const Game = (props) => {
             case 'showdown':
                 handleStatusShowdown(data.isDraw, data.winner);
                 break;
+            case 'stop':
+                handleStatusStop();
+                break;
         }
     }
 
@@ -108,7 +111,25 @@ const Game = (props) => {
 
     const handleStatusShowdown = (isDraw, winner) => {
         setGameStatus('showdown');
+
+        let isWinner = false;
+        if(!isDraw && winner === username){
+            isWinner = true;
+        }
+
+        const nextGameStatusProps = {
+            'isDraw': isDraw,
+            'isWinner': isWinner
+        }
         //Well a lot needs to be done here!
+        setGameStatusProps(nextGameStatusProps);
+    }
+
+    const handleStatusStop = () => {
+        setGameStatus('stop');
+        setGameStatusProps({});
+        setMyCards([]);
+        setTableCards([]);
     }
 
     const handleTurn = (json) => {

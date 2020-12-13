@@ -18,7 +18,7 @@ const MyCards = (props) =>{
         setCards(props.cards);
 
         //To avoid re-selecting cards
-        if(props.state === "bet"){
+        if(props.state !== "change"){
             setSelectedCards([]);
         }
 
@@ -68,6 +68,20 @@ const MyCards = (props) =>{
 
     return (
         <Container className="animate__animated animate__slideInUp">
+
+            {props.gameStatus && props.gameStatus === "showdown" && props.gameStatusProps.isDraw && (
+                <Typography variant="h1" align="center" className="my-cards-h1">Pareggio!</Typography>
+            )}
+            
+            {props.gameStatus && props.gameStatus === "showdown" && !props.gameStatusProps.isDraw && props.gameStatusProps.isWinner && (
+                <Typography variant="h1" align="center" className="my-cards-h1">Hai vinto!</Typography>
+            )}
+
+            {props.gameStatus && props.gameStatus === "showdown" && !props.gameStatusProps.isDraw && !props.gameStatusProps.isWinner && (
+                <Typography variant="h1" align="center" className="my-cards-h1">Hai perso...</Typography>
+            )}
+
+
             {cards.length === 0 ? (
                 <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>La mano deve ancora iniziare...</Typography>
             ) : (

@@ -98,6 +98,7 @@ class Rooms{
                         'waitingTime': waitingTime
                     },
                     'gameStatus': {
+                        'entranceFee': minBet,
                         'currentStatus': 'stop',
                         'deck': null,
                         'potValue': 0,
@@ -204,6 +205,17 @@ class Rooms{
         }
     }
 
+    newRound(roomID){
+        const room = this.getRoom(roomID);
+        room.gameStatus.currentStatus = "stop";
+        room.gameStatus.playingThisRound = [];
+        if(room.gameStatus.potValue !== 0){
+            room.gameStatus.entranceFee = room.gameStatus.properties.currentBet;
+        }
+        //TO-DO: Who partecipated before doesn't have to pay
+        room.gameStatus.properties = {};
+    }
+
     calculateScore(cards){
         let score = 0; 
         let figureValue = 10;
@@ -219,31 +231,97 @@ class Rooms{
         return score;
     }
 
-    setShowdownProps(room, scoreOnTheFloor){
-        let winners = [];
+    checkIfTris(cards){
+        const values = cards.map(c => parseInt(c.substring(1)));
+        const isTris = values.every(val => val === values[0]);
+        return isTris;
+    }
+
+    checkIfPerlina(floorCards, playerCards){
+        const floorValues = floorCards.map(c => parseInt(c.substring(1)));
+        const playerValues = playerCards.map(c => parseInt(c.substring(1)));
+
+        let isPerlina = true;
+        for(const floorVal of floorValues){
+            if(!playerValues.includes(floorVal)){
+                isPerlina = false;
+                break;
+            }
+        }
+        return isPerlina;
+    }
+
+    setShowdownProps(room, cardsOnTheFloor){
+        const scoreOnTheFloor = this.calculateScore(cardsOnTheFloor);      
+        let topScorers = [];
+        let topCards = [];
+        let isPerlina = false;
+        let isTris = false;
         let winnerDifference = 31; //default value for diff
 
         const playingThisRound = room.gameStatus.playingThisRound;
 
-        Object.values(room.users).forEach(user => {
+        for(const user of Object.values(room.users)){
             if(playingThisRound.includes(user.username)){
-                let userScore = this.calculateScore(user.currentCards);
-                let difference = Math.abs(userScore - scoreOnTheFloor);
-                if(difference < winnerDifference){
-                    winnerDifference = difference;
-                    winners = [user];
+                const userScore = this.calculateScore(user.currentCards);
+                const difference = Math.abs(userScore - scoreOnTheFloor);
+                const isThisTris = this.checkIfTris(user.currentCards);
+                let isThisPerlina = false;
+                if(difference === 0){
+                    isThisPerlina = this.checkIfPerlina(cardsOnTheFloor, user.currentCards);
                 }
-                else if(difference === winnerDifference){
-                    winners.push(user);
+
+                
+                if(isThisPerlina){
+                    if(isPerlina){
+                        topScorers.push(user.username);
+                    }
+                    else{
+                        topScorers = [user.username];
+                        isPerlina = true;
+                    }
+                    isTris = false;
+                    winnerDifference = 0;
+                }
+                else if(isThisTris && !isThisPerlina && !isPerlina){
+                    if(isTris){
+                        topScorers.push(user.username);
+                    }
+                    else{
+                        topScorers = [user.username]
+                        isTris = true;
+                    }
+                }
+                else if(!isThisPerlina && !isThisTris && !isPerlina && !isTris && difference <= winnerDifference){
+                    if(difference === winnerDifference){
+                        topScorers.push(user.username);
+                    }
+                    else{
+                        winnerDifference = difference;
+                        topScorers = [user.username];
+                    }
                 }
             }
-        })
+        }
 
-        const isDraw = winners.length > 1 ? true : false;
+        const isDraw = topScorers.length > 1 ? true : false;
+        const winner = topScorers.length > 1 ? "" : topScorers[0]
+        let winnerCards = [];
+        if(!isDraw){
+            const potValue = room.gameStatus.potValue;
+            const winnerPlayer =Object.values(room.users).find(u => u.username === winner)
+            winnerCards = winnerPlayer.currentCards;
+            winnerPlayer.pocket += parseFloat(potValue);
+            room.gameStatus.potValue = 0;
+        }
+        const currentBet = room.gameStatus.properties.currentBet;
+
         room.gameStatus.properties = {
             'score':  scoreOnTheFloor,
             'isDraw': isDraw,
-            'winners': winners
+            'winner': winner,
+            'winnerCards': winnerCards,
+            'currentBet': currentBet
         }
     }
 
@@ -266,8 +344,8 @@ class Rooms{
             player.ws.emit('cards',JSON.stringify(cardsData));
             //...take money
             //TO-DO: Handle draw in previous match
-            player.pocket -= parseFloat(room.gameProperties.minBet);
-            room.gameStatus.potValue += parseFloat(room.gameProperties.minBet);
+            player.pocket -= parseFloat(room.gameProperties.entranceFee);
+            room.gameStatus.potValue += parseFloat(room.gameProperties.entranceFee);
             const pocketData = {
                 'pocket': player.pocket
             }
@@ -380,9 +458,8 @@ class Rooms{
     startShowdown(roomID){
         const room = this.getRoom(roomID);
         const cardsOnTheFloor = [deck[0], deck[1], deck[2]];
-        const scoreOnTheFloor = this.calculateScore(cardsOnTheFloor);      
         room.gameStatus.currentStatus = 'showdown';
-        this.setShowdownProps(room, scoreOnTheFloor);
+        this.setShowdownProps(room, cardsOnTheFloor);
     }
 }
 

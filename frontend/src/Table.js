@@ -44,7 +44,6 @@ const Table = (props) =>{
                     )
                 })}
             </Box>
-            <img draggable="false" src={TableImg} className="table-img" />
         </Box>
     )
 }

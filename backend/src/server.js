@@ -56,7 +56,6 @@ io.on('connection',(socket) => {
 			console.log("Emitting new positions");
 			console.log(newPositions);
 			io.to(socket.roomID).emit('newPositions', JSON.stringify(newPositions));
-			
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
 			const data = {
@@ -98,7 +97,6 @@ io.on('connection',(socket) => {
 			console.log("Emitting new positions");
 			console.log(newPositions);
 			io.to(socket.roomID).emit('newPositions', JSON.stringify(newPositions));
-			
 		}
 		else if(!validator.isAlphanumeric(username) || validator.isEmpty(username)){
 			const data = {
@@ -233,9 +231,21 @@ io.on('connection',(socket) => {
 					const statusData = {
 						'status': 'showdown',
 						'isDraw': room.gameStatus.properties.isDraw,
-						'winner': room.gameStatus.properties.winner
+						'winner': room.gameStatus.properties.winner,
+						'winnerCards': room.gameStatus.properties.winnerCards
 					}
+					console.log(statusData);
 					io.to(socket.roomID).emit('status',JSON.stringify(statusData));
+
+					setTimeout(() => {
+						rooms.newRound(socket.roomID);
+						const statusData = {
+							'status': 'stop',
+						}
+						console.log(statusData);
+						io.to(socket.roomID).emit('status',JSON.stringify(statusData));
+					}, 10000);
+
 				}
 				else{
 					//Find next player that has to bet
@@ -276,12 +286,25 @@ server.listen(DEFAULT_PORT);
  * DEBUG *
  * *******
  */
+
+const cloneDeep = require('lodash.clonedeep');
+
 app.get('/rooms', (req, res) => {
-	const json = Object.assign(rooms);
-	Object.values(json.data).forEach(room => {
-		Object.values(room.users).forEach(user => {
-			delete user.ws;
-		})
-	})
-	res.send(json);
+	const clonedRooms = {}
+	for(const room of Object.keys(rooms.data)){
+		const gameProperties = rooms.data[room].gameProperties;
+		const gameStatus = rooms.data[room].gameStatus;
+		let users = {};
+		const oldUsers = rooms.data[room].users;
+		for(const user of Object.keys(oldUsers)){
+			users[user] = Object.assign({},oldUsers[user], {'ws': 'Something veeery long'});
+		}
+		clonedRooms[room] = {
+			'gameProperties': gameProperties,
+			'gameStatus': gameStatus,
+			'users': users
+		}
+	}
+	
+	res.send(clonedRooms);
 });
