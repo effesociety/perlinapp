@@ -1,78 +1,98 @@
-import {useState, useEffect} from 'react';
-import {socket} from './services/socket';
+import React from 'react';
+import { socket } from "./services/socket";
 import Header from './Header';
 import Enter from './Enter';
 import Game from './Game';
 import Footer from './Footer';
 import CustomSnackbar from './CustomSnackbar';
 
-const App = () => {
-  const [isPlaying, setIsPlaying] = useState(false); //To decide if the user is playing or not
-  //Game info (roomID and userID)
-  const [gameInfo, setGameInfo] = useState({});
-  const [snackbarProps, setSnackbarProps] = useState({});
+class App extends React.Component{
+    constructor(){
+        super();
+        this.state = {
+            'isPlaying': false,//To decide if the user is playing or not
+            'gameInfo': {},  //roomID, username, pocket and position
+            'snackBbarProps': {}
+        }
+        //Function bindings
+        this.handleRoomCreated = this.handleRoomCreated.bind(this);
+        this.handleRoomJoined = this.handleRoomJoined.bind(this);
+        this.handleError = this.handleError.bind(this);
+        this.closeSnackbar = this.closeSnackbar.bind(this);
+  }
 
-  useEffect(() => {  
-    socket.on('created', handleRoomCreated);
-    socket.on('joined', handleRoomJoined);
-    socket.on('error', handleError);
-  });
-
-  const handleRoomCreated = (json) => {
-    const data = JSON.parse(json);
-    const nextGameInfo = {
-      'roomID': data.roomID,
-      'username': data.username,
-      'pocket': data.pocket,
-      'position': data.position
+    componentDidMount(){
+        socket.on('created', this.handleRoomCreated);
+        socket.on('joined', this.handleRoomJoined);
+        socket.on('error', this.handleError);
     }
-    setGameInfo(nextGameInfo);
-    setIsPlaying(true);
-  }
 
-  const handleRoomJoined = (json) => {
-    const data = JSON.parse(json);
-    const nextGameInfo = {
-      'roomID': data.roomID,
-      'username': data.username,
-      'pocket': data.pocket,
-      'position': data.position
+
+    handleRoomCreated(json){
+        const data = JSON.parse(json);
+        const nextGameInfo = {
+        'roomID': data.roomID,
+        'username': data.username,
+        'pocket': data.pocket,
+        'position': data.position
+        }
+        this.setState({
+            'gameInfo': nextGameInfo,
+            'isPlaying': true
+        })
     }
-    setGameInfo(nextGameInfo);
-    setIsPlaying(true);
-  }
 
-  const handleError = (json) => {
-    const data = JSON.parse(json);
-    const nextSnackbarProps = {
-      'open': true,
-      'severity': 'error',
-      'msg': data.errMsg,
+    handleRoomJoined(json){
+        const data = JSON.parse(json);
+        const nextGameInfo = {
+        'roomID': data.roomID,
+        'username': data.username,
+        'pocket': data.pocket,
+        'position': data.position
+        }
+        this.setState({
+            'gameInfo': nextGameInfo,
+            'isPlaying': true
+        })
     }
-    setSnackbarProps(nextSnackbarProps);
-  }
 
-  const closeSnackbar = () => {
-    const nextSnackbarProps = {
-      'open': false,
-      'severity': "",
-      'msg': "",
-    };
-    setSnackbarProps(nextSnackbarProps);
-  }
+    handleError(json){
+        const data = JSON.parse(json);
+        const nextSnackbarProps = {
+        'open': true,
+        'severity': 'error',
+        'msg': data.errMsg,
+        }
+        this.setState({
+            'snackbarProps': nextSnackbarProps
+        })
+    }
 
-  return (
-    <div className="App">
-      <Header />
-      {isPlaying ? (
-        <Game {...gameInfo} />
-      ) : (
-        <Enter/>
-      )}
-      <Footer/>
-      <CustomSnackbar {...snackbarProps} closeSnackbar={closeSnackbar}/>
-    </div>
-  );
+    closeSnackbar(){
+        const nextSnackbarProps = {
+        'open': false,
+        'severity': "",
+        'msg': "",
+        };
+        this.setState({
+            'snackbarProps': nextSnackbarProps
+        })
+    }
+    
+    render(){
+        return (
+            <div className="App">
+              <Header />
+              {this.state.isPlaying ? (
+                <Game {...this.state.gameInfo} />
+              ) : (
+                <Enter/>
+              )}
+              <Footer/>
+              <CustomSnackbar {...this.state.snackbarProps} closeSnackbar={this.closeSnackbar}/>
+            </div>
+          );
+    }
 }
 
 export default App;

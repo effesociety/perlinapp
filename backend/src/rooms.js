@@ -205,6 +205,16 @@ class Rooms{
         }
     }
 
+    sendAll(roomID, event, data){
+        const room = this.getRoom(roomID);
+        const jsonData = JSON.stringify(data);
+        for(const user of Object.values(room.users)){
+            if(user.ws){
+                user.ws.emit(event, jsonData);
+            }
+        }
+    }
+
     newRound(roomID){
         const room = this.getRoom(roomID);
         room.gameStatus.currentStatus = "stop";
@@ -264,7 +274,7 @@ class Rooms{
         let winnerDifference = 31; //default value for diff
 
         const playingThisRound = room.gameStatus.playingThisRound;
-        const acceptableUserStatus = ['call', 'raise']
+        const acceptableUserStatus = ['call', 'raise', 'change'] //'change' is acceptable is everyone folded (expect the last player)
 
         for(const user of Object.values(room.users)){
             if(playingThisRound.includes(user.username) && acceptableUserStatus.includes(user.status)){

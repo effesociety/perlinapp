@@ -1,7 +1,6 @@
-import {useEffect, useState} from 'react';
-import {socket} from './services/socket';
+import {Component} from 'react';
+import { socket } from "./services/socket";
 import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
@@ -10,110 +9,138 @@ import Button from '@material-ui/core/Button';
 import MyCards from './MyCards';
 import Table from './Table';
 
-const Game = (props) => {
-    const {roomID, username} = props;
-    const [players, setPlayers] = useState({})
-    const [pocket, setPocket] = useState(props.pocket);
-    const [potValue, setPotValue] = useState(0);
-    const [position, setPosition] = useState(props.position);
-    const [tableCards, setTableCards] = useState([]);
-    const [myCards, setMyCards] = useState([]);
-    const [gameStatus, setGameStatus] = useState('stop');
-    const [gameStatusProps, setGameStatusProps] = useState({});
-    const [isMyTurn, SetIsMyTurn] = useState(false);
 
-    useEffect(() => {  
-        socket.on('newPositions', handleNewPositions);
-        socket.on('pocketUpdate', handlePocketUpdate);
-        socket.on('potValueUpdate', handlePotValueUpdate);
-        socket.on('tableCards', handleTableCards);
-        socket.on('cards', handleMyCards);
-        socket.on('status', handleStatus);
-        socket.on('turn', handleTurn);
-    });
+class Game extends Component{
+    constructor(props){
+        super(props);
+        this.state = {
+            'roomID': props.roomID,
+            'username': props.username,
+            'pocket': props.pocket,
+            'position': props.position,
+            'players': [],
+            'potValue': 0,
+            'tableCards': [],
+            'myCards': [],
+            'gameStatus': 'stop',
+            'GameStatusProps': {},
+            'isMyTurn': false
+        }
+        this.handleNewPositions = this.handleNewPositions.bind(this);
+        this.handlePocketUpdate = this.handlePocketUpdate.bind(this);
+        this.handlePotValueUpdate = this.handlePotValueUpdate.bind(this);
+        this.handleTableCards = this.handleTableCards.bind(this);
+        this.handleMyCards = this.handleMyCards.bind(this);
+        this.handleStatus = this.handleStatus.bind(this);
+        this.handleTurn = this.handleTurn.bind(this);
+        this.handleStatusChange = this.handleStatusChange.bind(this);
+        this.handleStatusBet = this.handleStatusBet.bind(this);
+        this.handleStatusShowdown = this.handleStatusShowdown.bind(this);
+        this.handleStatusStop = this.handleStatusStop.bind(this);
+    }
 
-    const handleNewPositions = (json) => {
-        console.log("Got new positions")
+    componentDidMount(){  
+        socket.on('newPositions', this.handleNewPositions);
+        socket.on('pocketUpdate', this.handlePocketUpdate);
+        socket.on('potValueUpdate', this.handlePotValueUpdate);
+        socket.on('tableCards', this.handleTableCards);
+        socket.on('cards', this.handleMyCards);
+        socket.on('status', this.handleStatus);
+        socket.on('turn', this.handleTurn);
+    }
+
+    handleNewPositions(json){
         const data = JSON.parse(json);
         //Set players for visualization
-        console.log(data)
-        setPlayers(data);
+        this.setState({
+            'players': data
+        })
         //TO-DO: Verify if this is still needed
         Object.keys(data).forEach(u => {
-            if(u === username){
-                setPosition(data[u]);
+            if(u === this.state.username){
+                this.setState({
+                    'position': data[u]
+                })
             }
         })
     }
 
-    const handlePocketUpdate = (json) => {
+    handlePocketUpdate(json){
         const data = JSON.parse(json);
-        setPocket(data.pocket);
+        this.setState({
+            'pocket': data.pocket
+        })
     }
 
-    const handlePotValueUpdate = (json) => {
+    handlePotValueUpdate(json){
         const data = JSON.parse(json);
-        setPotValue(data.potValue);
+        this.setState({
+            'potValue': data.potValue
+        })
     }
 
-    const handleStart = (action) => {
+    handleStart(action){
         const data = {
             'action': action
         };
         socket.emit('start', JSON.stringify(data));
     }
 
-    const handleTableCards = (json) => {
+    handleTableCards(json){
         const data = JSON.parse(json);
-        const tableCards = data.tableCards;
-        setTableCards(tableCards);
+        this.setState({
+            'tableCards': data.tableCards
+        })
     }
 
-    const handleMyCards = (json) => {
+    handleMyCards(json){
         const data = JSON.parse(json);
-        const cards = data.cards;
-        setMyCards(cards);
+        this.setState({
+            'myCards': data.cards
+        })
     }
 
-    const handleStatus = (json) => {
+    handleStatus(json){
         const data = JSON.parse(json);
         switch(data.status){
             case 'change':
-                handleStatusChange(data.numChangeableCards);
+                this.handleStatusChange(data.numChangeableCards);
                 break;
             case 'bet':
-                handleStatusBet(data.currentBet);
+                this.handleStatusBet(data.currentBet);
                 break;
             case 'showdown':
-                handleStatusShowdown(data.isDraw, data.winner);
+                this.handleStatusShowdown(data.isDraw, data.winner);
                 break;
             case 'stop':
-                handleStatusStop();
+                this.handleStatusStop();
                 break;
         }
     }
 
-    const handleStatusChange = (numChangeableCards) => {
-        setGameStatus('change');
+    handleStatusChange(numChangeableCards){
         const nextGameStatusProps = {
             'numChangeableCards': numChangeableCards
         }
-        setGameStatusProps(nextGameStatusProps);
+        this.setState({
+            'gameStatus': 'change',
+            'gameStatusProps': nextGameStatusProps
+        })
     }
 
-    const handleStatusBet = (currentBet) => {
-        setGameStatus('bet');
+    handleStatusBet(currentBet){
         const nextGameStatusProps = {
             'currentBet': currentBet
         }
-        setGameStatusProps(nextGameStatusProps);
+        this.setState({
+            'gameStatus': 'bet',
+            'gameStatusProps': nextGameStatusProps
+        })
     }
 
-    const handleStatusShowdown = (isDraw, winner) => {
-        setGameStatus('showdown');
-
+    handleStatusShowdown(isDraw, winner){
         let isWinner = false;
-        if(!isDraw && winner === username){
+        if(!isDraw && winner === this.state.username){
             isWinner = true;
         }
 
@@ -122,68 +149,68 @@ const Game = (props) => {
             'isWinner': isWinner
         }
         //Well a lot needs to be done here!
-        setGameStatusProps(nextGameStatusProps);
+        this.setState({
+            'gameStatus': 'showdown',
+            'gameStatusProps': nextGameStatusProps
+        })
     }
 
-    const handleStatusStop = () => {
-        setGameStatus('stop');
-        setGameStatusProps({});
-        setMyCards([]);
-        setTableCards([]);
+    handleStatusStop(){
+        this.setState({
+            'gameStatus': 'stop',
+            'gameStatusProps': {},
+            'myCards': [],
+            'tableCards': []
+        })
     }
 
-    const handleTurn = (json) => {
+    handleTurn(json){
         const data = JSON.parse(json);
-
-        console.log("Got turn message");
-        console.log(data);
-        console.log(username)
-
-        console.log(data.turn === username)
-
-        if(data.turn === username){
-            SetIsMyTurn(true);
+        if(data.turn === this.state.username){
+            this.setState({'isMyTurn': true})
         }
         else{
-            SetIsMyTurn(false);
+            this.setState({'isMyTurn': false})
         }
     }
-      
-    return (
-        <div>
-            <Container>
-                <Card>
-                    <CardContent>
-                        RoomID: {roomID} <br/>
-                        Username: {username} <br/>
-                        Pocket: {pocket} <br/>
-                        PotValue: {potValue} <br/>
-                        Position: {position} <br/>
-                        TableCards: {tableCards} <br/>
-                        MyCards: {myCards} <br/>
-                        GameStatus: {gameStatus} <br/>
-                        IsMyTurn: {isMyTurn ? ("True") : ("False")} <br/>
-                        <Button variant="contained" color="primary" onClick={() => handleStart('play')}>Partecipa</Button>
-                        <Button variant="contained" color="primary" onClick={() => handleStart('skip')}>Skip</Button>
-                    </CardContent>
-                </Card>
-            </Container>
+    
+    render(){
+        return (
+            <div>
+                <Container>
+                    <Card>
+                        <CardContent>
+                            RoomID: {this.state.roomID} <br/>
+                            Username: {this.state.username} <br/>
+                            Pocket: {this.state.pocket} <br/>
+                            PotValue: {this.state.potValue} <br/>
+                            Position: {this.state.position} <br/>
+                            TableCards: {this.state.tableCards} <br/>
+                            MyCards: {this.state.myCards} <br/>
+                            GameStatus: {this.state.gameStatus} <br/>
+                            IsMyTurn: {this.state.isMyTurn ? ("True") : ("False")} <br/>
+                            <Button variant="contained" color="primary" onClick={() => this.handleStart('play')}>Partecipa</Button>
+                            <Button variant="contained" color="primary" onClick={() => this.handleStart('skip')}>Skip</Button>
+                        </CardContent>
+                    </Card>
+                </Container>
 
-        <Box className="game-container">
+            <Box className="game-container">
 
 
-            <Box className="table-box-container">
-                <Table cards={tableCards} players={players} />
+                <Box className="table-box-container">
+                    <Table cards={this.state.tableCards} players={this.state.players} />
+                </Box>
+                <Box className="cards-box-container">
+                    <MyCards cards={this.state.myCards} gameStatus={this.state.gameStatus} gameStatusProps={this.state.gameStatusProps} isMyTurn={this.state.isMyTurn} />
+                </Box>
             </Box>
-            <Box className="cards-box-container">
-                <MyCards cards={myCards} gameStatus={gameStatus} gameStatusProps={gameStatusProps} isMyTurn={isMyTurn} />
-            </Box>
-        </Box>
 
 
 
-        </div>
-    )
+            </div>
+        )
+    }
 }
 
 export default Game;

@@ -136,7 +136,8 @@ io.on('connection',(socket) => {
 				const data = {
 					'tableCards': tableCards
 				}
-				io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
+				rooms.sendAll(socket.roomID, 'tableCards', data);
+				//io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
 				//Go to next state
 				rooms.startChangeRound(socket.roomID);
 				const numChangeableCards = room.gameStatus.properties.numChangeableCards;
@@ -225,7 +226,11 @@ io.on('connection',(socket) => {
 				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call");
 				const numRaisePlayers = rooms.getStatusPlayers(socket.roomID, "raise");
 
-				if(numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === room.gameStatus.playingThisRound.length){
+				const numPlayingThisRound = room.gameStatus.playingThisRound.length;
+				const condition1 = numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === numPlayingThisRound; //1 raise and the others called/folded
+				const condition2 = numFoldedPlayers === numPlayingThisRound-1; //Everybody except one folded
+
+				if(condition1 || condition2){
 					//Go to next state
 					rooms.startShowdown(socket.roomID);
 					const statusData = {
