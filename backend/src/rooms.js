@@ -94,11 +94,11 @@ class Rooms{
                 //Default values for new room
                 this.data[roomID] = {
                     'gameProperties': {
-                        'minBet': minBet,
-                        'waitingTime': waitingTime
+                        'minBet': parseFloat(minBet),
+                        'waitingTime': parseFloat(waitingTime)
                     },
                     'gameStatus': {
-                        'entranceFee': minBet,
+                        'entranceFee': parseFloat(minBet),
                         'currentStatus': 'stop',
                         'deck': null,
                         'potValue': 0,
@@ -124,7 +124,7 @@ class Rooms{
             'username': username,
             'active': true,
             'status': 'wait',
-            'pocket': DEFAULT_POCKET_VALUE,
+            'pocket': parseFloat(DEFAULT_POCKET_VALUE),
             'position': position,
             'betValue': null,
             'currentCards': [],
@@ -214,6 +214,10 @@ class Rooms{
         }
         //TO-DO: Who partecipated before doesn't have to pay
         room.gameStatus.properties = {};
+        for(const user of Object.values(room.users)){
+            user.status = "wait";
+            user.currentCards = [];
+        }
     }
 
     calculateScore(cards){
@@ -260,9 +264,10 @@ class Rooms{
         let winnerDifference = 31; //default value for diff
 
         const playingThisRound = room.gameStatus.playingThisRound;
+        const acceptableUserStatus = ['call', 'raise']
 
         for(const user of Object.values(room.users)){
-            if(playingThisRound.includes(user.username)){
+            if(playingThisRound.includes(user.username) && acceptableUserStatus.includes(user.status)){
                 const userScore = this.calculateScore(user.currentCards);
                 const difference = Math.abs(userScore - scoreOnTheFloor);
                 const isThisTris = this.checkIfTris(user.currentCards);
@@ -344,8 +349,8 @@ class Rooms{
             player.ws.emit('cards',JSON.stringify(cardsData));
             //...take money
             //TO-DO: Handle draw in previous match
-            player.pocket -= parseFloat(room.gameProperties.entranceFee);
-            room.gameStatus.potValue += parseFloat(room.gameProperties.entranceFee);
+            player.pocket -= parseFloat(room.gameStatus.entranceFee);
+            room.gameStatus.potValue += parseFloat(room.gameStatus.entranceFee);
             const pocketData = {
                 'pocket': player.pocket
             }

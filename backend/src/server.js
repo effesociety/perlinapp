@@ -207,9 +207,9 @@ io.on('connection',(socket) => {
 			const currentUserPosition = room.gameStatus.properties.currentUserPosition;
 			const nextUser = room.gameStatus.playingThisRound[currentUserPosition];
 			
-			if(user.username === nextUser){
+			const data = JSON.parse(json);
+			if(user.username === nextUser && (data.action !== "raise" || (data.action === "raise" && data.value > room.gameStatus.properties.currentBet))){
 				console.log("Received bet message");
-				const data = JSON.parse(json);
 				rooms.handleBet(socket.roomID, socket.userID, data);
 
 				if(data.action === "raise"){
