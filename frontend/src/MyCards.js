@@ -80,19 +80,32 @@ class MyCards extends React.Component{
 
         return (
             <Container className="animate__animated animate__slideInUp">
-    
+
+                <Typography variant="h4" className="my-cards-h4" align="center">
+                    Codice Room: <b>{this.props.roomID}</b>
+                </Typography>
+
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && this.props.gameStatusProps.isDraw && (
                     <Typography variant="h1" align="center" className="my-cards-h1">Pareggio!</Typography>
                 )}
-                
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && this.props.gameStatusProps.isWinner && (
                     <Typography variant="h1" align="center" className="my-cards-h1">Hai vinto!</Typography>
                 )}
-    
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
                     <Typography variant="h1" align="center" className="my-cards-h1">Hai perso...</Typography>
                 )}
     
+
+                {this.props.gameStatus && this.props.gameStatus !== "stop" && this.props.isMyTurn && (
+                    <Typography variant="h4" className="my-cards-h4" align="center">
+                    È il <b>tuo </b>turno
+                    </Typography>
+                )}
+                {this.props.gameStatus && this.props.gameStatus !== "stop" && !this.props.isMyTurn && (
+                    <Typography variant="h4" className="my-cards-h4" align="center">
+                    È il turno di <b>{this.props.turnPlayer}</b>
+                    </Typography>
+                )}
     
                 {this.props.cards.length === 0 ? (
                     <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>La mano deve ancora iniziare...</Typography>
@@ -102,7 +115,8 @@ class MyCards extends React.Component{
                 <Box className="card-wrapper-box">
                     {this.props.cards.map(card => {
     
-                        const imgWrapperClassname = this.state.selectedCards.includes(card) && isSelectable ? 'card-img-wrapper-selected' : 'card-img-wrapper';
+                        const selectableImg = this.props.gameStatus === "change" ? 'card-img-wrapper-selectable' : 'card-img-wrapper';
+                        const imgWrapperClassname = this.state.selectedCards.includes(card) && isSelectable ? 'card-img-wrapper-selected' : selectableImg;
                         
                         return (
                             <Box className="card-box">

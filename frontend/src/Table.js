@@ -1,8 +1,7 @@
 import {useState, useEffect} from 'react';
 import CardImages from './CardImages';
-import Container from "@material-ui/core/Container";
 import Box from "@material-ui/core/Box";
-import TableImg from "./images/tavolo.png";
+import CoinImg from "./images/coin.png";
 import 'animate.css/animate.css'
 import { Typography } from '@material-ui/core';
 
@@ -43,6 +42,14 @@ const Table = (props) =>{
                         </Box>
                     )
                 })}
+
+                
+                <Box className="potvalue-box">
+                    <img draggable="false" src={CoinImg} className="potvalue-coin-img"/>
+                    <Typography><b>{props.potValue}</b></Typography>
+                </Box>
+                
+
             </Box>
         </Box>
     )

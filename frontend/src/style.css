@@ -35,10 +35,32 @@ Game.js
 .table-box-container{
     width:65%;
     height:95vh;
-    background-image:url('images/tavolo.png');
+    background-image:url('images/table.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+.potvalue-box{
+    width:35%;
+    margin:auto;
+    left:0;
+    right:0;
+    position: absolute;
+    top:20vh;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+}
+
+.potvalue-box > p{
+    font-size: 2rem!important;
+}
+
+.potvalue-coin-img{
+    width:40px;
+    height:40px;
+    margin-right: 20px;
 }
 
 .cards-box-container{
@@ -143,7 +165,12 @@ Game.js
     margin-bottom: 35px!important;
 }
 
-.card-img-wrapper{
+.my-cards-h4{
+    color: #fff;
+    margin-bottom: 20px!important;
+}
+
+.card-img-wrapper-selectable{
     width:112px;
     height:200px;
     border-radius:5px;
@@ -153,8 +180,17 @@ Game.js
     margin:auto;
 }
 
-.card-img-wrapper:hover{
+.card-img-wrapper-selectable:hover{
     border: 10px solid rgb(63, 139, 238);
+}
+
+.card-img-wrapper{
+    width:112px;
+    height:200px;
+    border-radius:5px;
+    border:10px solid rgb(133, 133, 133);
+    background-color: #fff;
+    margin:auto;
 }
 
 .card-img-wrapper-selected{

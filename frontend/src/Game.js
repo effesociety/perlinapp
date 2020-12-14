@@ -24,7 +24,8 @@ class Game extends Component{
             'myCards': [],
             'gameStatus': 'stop',
             'GameStatusProps': {},
-            'isMyTurn': false
+            'isMyTurn': false,
+            'turnPlayer': ""
         }
         this.handleNewPositions = this.handleNewPositions.bind(this);
         this.handlePocketUpdate = this.handlePocketUpdate.bind(this);
@@ -167,10 +168,16 @@ class Game extends Component{
     handleTurn(json){
         const data = JSON.parse(json);
         if(data.turn === this.state.username){
-            this.setState({'isMyTurn': true})
+            this.setState({
+                'isMyTurn': true,
+                'turnPlayer': data.turn
+            })
         }
         else{
-            this.setState({'isMyTurn': false})
+            this.setState({
+                'isMyTurn': false,
+                'turnPlayer': data.turn
+            })
         }
     }
     
@@ -199,10 +206,21 @@ class Game extends Component{
 
 
                 <Box className="table-box-container">
-                    <Table cards={this.state.tableCards} players={this.state.players} />
+                    <Table 
+                        cards={this.state.tableCards} 
+                        players={this.state.players} 
+                        potValue={this.state.potValue}
+                    />
                 </Box>
                 <Box className="cards-box-container">
-                    <MyCards cards={this.state.myCards} gameStatus={this.state.gameStatus} gameStatusProps={this.state.gameStatusProps} isMyTurn={this.state.isMyTurn} />
+                    <MyCards 
+                        cards={this.state.myCards} 
+                        gameStatus={this.state.gameStatus} 
+                        gameStatusProps={this.state.gameStatusProps} 
+                        isMyTurn={this.state.isMyTurn} 
+                        turnPlayer={this.state.turnPlayer}
+                        roomID={this.state.roomID}
+                    />
                 </Box>
             </Box>
 

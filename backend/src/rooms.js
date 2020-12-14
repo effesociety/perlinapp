@@ -87,7 +87,7 @@ class Rooms{
         let roomID;
         let duplicate;
         do{
-            roomID = generateID();
+            roomID = generateID().toUpperCase();
             duplicate = true;
             if(!this.data.hasOwnProperty(roomID)){
                 duplicate = false;
