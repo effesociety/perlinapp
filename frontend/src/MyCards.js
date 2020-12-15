@@ -6,6 +6,7 @@ import Box from "@material-ui/core/Box";
 import Button from "@material-ui/core/Button";
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import PocketImg from "./images/money-bag.png";
 import 'animate.css/animate.css'
 
 class MyCards extends React.Component{
@@ -13,13 +14,15 @@ class MyCards extends React.Component{
         super(props);
         this.state = {
             'cards': [],
-            'selectedCards': []
+            'selectedCards': [],
+            'isRaiseAllowed': false
         }
         this.betValue = React.createRef();
         //Function bindings
         this.handleClickCard = this.handleClickCard.bind(this);
         this.handleChangeCards = this.handleChangeCards.bind(this);
         this.handleBet = this.handleBet.bind(this);
+        this.handleTextfieldChange = this.handleTextfieldChange.bind(this);
     }
 
     handleClickCard(card){
@@ -70,20 +73,44 @@ class MyCards extends React.Component{
         }
     }
 
+    handleTextfieldChange(event){
+        //If problems use 'event.target.value'
+        if(!isNaN(this.betValue.current.value) && parseFloat(this.betValue.current.value) > this.props.gameStatusProps.currentBet &&  parseFloat(this.betValue.current.value) >= this.props.minBet){
+            this.setState({
+                'isRaiseAllowed': true
+            })
+        }
+        else{
+            this.setState({
+                'isRaiseAllowed': false
+            })
+        }
+    }
+
     render(){
-        const isSelectable = this.props.gameStatus === "change" ? true : false;
+        //Fix for selected cards
+        const isSelectable = this.props.gameStatus === "change";
         if(!isSelectable && this.state.selectedCards.length > 0){
             this.setState({
                 'selectedCards': []
             })
         }
+        //Fix for disabling bet button
+        if(this.props.gameStatus !== "bet" && this.state.isRaiseAllowed){
+            this.setState({
+                "isRaiseAllowed": false
+            })
+        }
+
+        /*
+        <Typography variant="h4" className="my-cards-h4" align="center">
+            Codice Room: <b>{this.props.roomID}</b>
+        </Typography>
+        */
 
         return (
             <Container className="animate__animated animate__slideInUp">
 
-                <Typography variant="h4" className="my-cards-h4" align="center">
-                    Codice Room: <b>{this.props.roomID}</b>
-                </Typography>
 
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && this.props.gameStatusProps.isDraw && (
                     <Typography variant="h1" align="center" className="my-cards-h1">Pareggio!</Typography>
@@ -92,11 +119,11 @@ class MyCards extends React.Component{
                     <Typography variant="h1" align="center" className="my-cards-h1">Hai vinto!</Typography>
                 )}
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
-                    <Typography variant="h1" align="center" className="my-cards-h1">Hai perso...</Typography>
+                    <Typography variant="h1" align="center" className="my-cards-h1">Hai perso... (vincitore: <b>{this.props.gameStatusProps.winner}</b>)</Typography>
                 )}
     
 
-                {this.props.gameStatus && this.props.gameStatus !== "stop" && this.props.isMyTurn && (
+                {this.props.gameStatus && (this.props.gameStatus === "change" || this.props.gameStatus === "bet") && this.props.isMyTurn && (
                     <Typography variant="h4" className="my-cards-h4" align="center">
                     È il <b>tuo </b>turno
                     </Typography>
@@ -133,7 +160,7 @@ class MyCards extends React.Component{
                         <Button variant="contained" color="primary" className="actions-btn" disabled={!this.props.isMyTurn} onClick={() => this.handleBet('call')}>Call</Button>
                     )}
                     {this.props.gameStatus && this.props.gameStatus === 'bet' && (
-                        <Button variant="contained" color="primary" className="actions-btn" disabled={!this.props.isMyTurn} onClick={() => this.handleBet('raise')}>Punta</Button>
+                        <Button variant="contained" color="primary" className="actions-btn" disabled={!this.props.isMyTurn || !this.state.isRaiseAllowed}  onClick={() => this.handleBet('raise')}>Punta</Button>
                     )}
                     {this.props.gameStatus && this.props.gameStatus === 'bet' && (
                         <Button variant="contained" color="primary" className="actions-btn" disabled={!this.props.isMyTurn} onClick={() => this.handleBet('fold')}>Fold</Button>
@@ -150,9 +177,22 @@ class MyCards extends React.Component{
     
                 {this.props.gameStatus && this.props.gameStatus === 'bet' && (
                     <Box className="bet-input-box">
-                        <TextField id="bet-value" label="Valore puntata" variant="filled" disabled={!this.props.isMyTurn} inputRef={this.betValue} fullWidth/>
+                        <TextField id="bet-value" label="Valore puntata" variant="filled" disabled={!this.props.isMyTurn} inputRef={this.betValue} onChange={this.handleTextfieldChange} fullWidth/>
                     </Box>
                 )}
+
+
+                <Box className="pocket-box">
+                    <img draggable="false" src={PocketImg} className="pocket-img"/>
+                    <Typography><b>{this.props.pocket}</b> -  Puntata minima: <b>{this.props.minBet}</b></Typography>
+                </Box>
+
+                {this.props.gameStatus && this.props.gameStatus === "bet" && this.props.gameStatusProps.currentBet > 0 && (
+                    <Typography variant="h4" className="my-cards-h4" align="center">
+                        Puntata maggiore: {this.props.gameStatusProps.currentBet} (<b>{this.props.gameStatusProps.betUser}</b>)
+                    </Typography>
+                )}
+                
             </Container>
         )
     }

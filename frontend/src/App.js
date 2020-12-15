@@ -31,10 +31,11 @@ class App extends React.Component{
     handleRoomCreated(json){
         const data = JSON.parse(json);
         const nextGameInfo = {
-        'roomID': data.roomID,
-        'username': data.username,
-        'pocket': data.pocket,
-        'position': data.position
+            'roomID': data.roomID,
+            'username': data.username,
+            'initialPocket': data.pocket,
+            'initialPosition': data.position,
+            'minBet': data.minBet
         }
         this.setState({
             'gameInfo': nextGameInfo,
@@ -45,10 +46,11 @@ class App extends React.Component{
     handleRoomJoined(json){
         const data = JSON.parse(json);
         const nextGameInfo = {
-        'roomID': data.roomID,
-        'username': data.username,
-        'pocket': data.pocket,
-        'position': data.position
+            'roomID': data.roomID,
+            'username': data.username,
+            'initialPocket': data.pocket,
+            'initialPosition': data.position,
+            'minBet': data.minBet
         }
         this.setState({
             'gameInfo': nextGameInfo,

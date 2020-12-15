@@ -136,8 +136,8 @@ io.on('connection',(socket) => {
 				const data = {
 					'tableCards': tableCards
 				}
-				rooms.sendAll(socket.roomID, 'tableCards', data);
-				//io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
+				//rooms.sendAll(socket.roomID, 'tableCards', data);
+				io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
 				//Go to next state
 				rooms.startChangeRound(socket.roomID);
 				const numChangeableCards = room.gameStatus.properties.numChangeableCards;
@@ -176,7 +176,8 @@ io.on('connection',(socket) => {
 					rooms.startBetRound(socket.roomID);
 					const statusData = {
 						'status': 'bet',
-						'currentBet': 0
+						'currentBet': 0,
+						'betUser': ''
 					}
 					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
 					//Find first player that has to bet
@@ -216,7 +217,8 @@ io.on('connection',(socket) => {
 				if(data.action === "raise"){
 					const statusData = {
 						'status': 'bet',
-						'currentBet': room.gameStatus.properties.currentBet
+						'currentBet': room.gameStatus.properties.currentBet,
+						'betUser': room.gameStatus.properties.betUser
 					}
 					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
 				}

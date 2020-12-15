@@ -1,23 +1,16 @@
 import {Component} from 'react';
 import { socket } from "./services/socket";
-import Container from "@material-ui/core/Container";
-import Box from "@material-ui/core/Box";
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import Button from '@material-ui/core/Button';
-
+import {Container, Box, Card, CardContent, Button, Typography} from "@material-ui/core/";
 import MyCards from './MyCards';
 import Table from './Table';
-
+import 'animate.css/animate.css'
 
 class Game extends Component{
     constructor(props){
         super(props);
         this.state = {
-            'roomID': props.roomID,
-            'username': props.username,
-            'pocket': props.pocket,
-            'position': props.position,
+            'pocket': props.initialPocket,
+            'position': props.initialPosition,
             'players': [],
             'potValue': 0,
             'tableCards': [],
@@ -25,7 +18,8 @@ class Game extends Component{
             'gameStatus': 'stop',
             'GameStatusProps': {},
             'isMyTurn': false,
-            'turnPlayer': ""
+            'turnPlayer': "",
+            'startBtnsDisabled': false
         }
         this.handleNewPositions = this.handleNewPositions.bind(this);
         this.handlePocketUpdate = this.handlePocketUpdate.bind(this);
@@ -58,7 +52,7 @@ class Game extends Component{
         })
         //TO-DO: Verify if this is still needed
         Object.keys(data).forEach(u => {
-            if(u === this.state.username){
+            if(u === this.props.username){
                 this.setState({
                     'position': data[u]
                 })
@@ -82,9 +76,12 @@ class Game extends Component{
 
     handleStart(action){
         const data = {
-            'action': action
+            'action': action,
         };
         socket.emit('start', JSON.stringify(data));
+        this.setState({
+            'startBtnsDisabled': true
+        })
     }
 
     handleTableCards(json){
@@ -108,7 +105,7 @@ class Game extends Component{
                 this.handleStatusChange(data.numChangeableCards);
                 break;
             case 'bet':
-                this.handleStatusBet(data.currentBet);
+                this.handleStatusBet(data.currentBet, data.betUser);
                 break;
             case 'showdown':
                 this.handleStatusShowdown(data.isDraw, data.winner);
@@ -129,9 +126,10 @@ class Game extends Component{
         })
     }
 
-    handleStatusBet(currentBet){
+    handleStatusBet(currentBet, betUser){
         const nextGameStatusProps = {
-            'currentBet': currentBet
+            'currentBet': currentBet,
+            'betUser': betUser
         }
         this.setState({
             'gameStatus': 'bet',
@@ -141,13 +139,14 @@ class Game extends Component{
 
     handleStatusShowdown(isDraw, winner){
         let isWinner = false;
-        if(!isDraw && winner === this.state.username){
+        if(!isDraw && winner === this.props.username){
             isWinner = true;
         }
 
         const nextGameStatusProps = {
             'isDraw': isDraw,
-            'isWinner': isWinner
+            'isWinner': isWinner,
+            'winner': winner
         }
         //Well a lot needs to be done here!
         this.setState({
@@ -161,13 +160,14 @@ class Game extends Component{
             'gameStatus': 'stop',
             'gameStatusProps': {},
             'myCards': [],
-            'tableCards': []
+            'tableCards': [],
+            'startBtnsDisabled': false
         })
     }
 
     handleTurn(json){
         const data = JSON.parse(json);
-        if(data.turn === this.state.username){
+        if(data.turn === this.props.username){
             this.setState({
                 'isMyTurn': true,
                 'turnPlayer': data.turn
@@ -182,13 +182,53 @@ class Game extends Component{
     }
     
     render(){
+
+        if(this.state.gameStatus === "stop"){
+            document.body.classList.add("no-scroll")
+        }
+        else if(this.state.gameStatus !== "stop" && document.body.classList.contains("no-scroll")){
+            document.body.classList.remove("no-scroll")
+        }
+
         return (
-            <div>
+            <Box>
+
+                {this.state.gameStatus === "stop" && (
+                    <Box className="outer-wrapper">
+                        <Box className="inner-wrapper">
+                            <Card className="inner-wrapper-card animate__animated animate__slideInUp">
+                                <CardContent>
+                                    <Typography variant="h4" align="center">
+                                        Codice Room: <b>{this.props.roomID}</b>
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                            <Box className="flex-break"/>
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                className="inner-wrapper-btn animate__animated animate__slideInUp" 
+                                disabled={this.state.startBtnsDisabled} 
+                                onClick={() => this.handleStart('play')}>
+                                    Partecipa
+                            </Button>
+                            <Button 
+                                variant="contained" 
+                                color="primary" 
+                                className="inner-wrapper-btn animate__animated animate__slideInUp" 
+                                disabled={this.state.startBtnsDisabled} 
+                                onClick={() => this.handleStart('skip')}>
+                                    Skip
+                            </Button>
+                        </Box>
+                    </Box>
+                )}
+
                 <Container>
                     <Card>
                         <CardContent>
-                            RoomID: {this.state.roomID} <br/>
-                            Username: {this.state.username} <br/>
+                            RoomID: {this.props.roomID} <br/>
+                            Username: {this.props.username} <br/>
                             Pocket: {this.state.pocket} <br/>
                             PotValue: {this.state.potValue} <br/>
                             Position: {this.state.position} <br/>
@@ -219,14 +259,16 @@ class Game extends Component{
                         gameStatusProps={this.state.gameStatusProps} 
                         isMyTurn={this.state.isMyTurn} 
                         turnPlayer={this.state.turnPlayer}
-                        roomID={this.state.roomID}
+                        roomID={this.props.roomID}
+                        pocket={this.state.pocket}
+                        minBet={this.props.minBet}
                     />
                 </Box>
             </Box>
 
 
 
-            </div>
+            </Box>
         )
     }
 }
