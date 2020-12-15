@@ -62,6 +62,9 @@ class MyCards extends React.Component{
     
     handleBet(action){
         if(this.props.gameStatus && this.props.gameStatus === "bet"){
+            this.setState({
+                'isRaiseAllowed': false
+            })
             let data = {
                 'action': action,
                 'value': -1 //Default value
@@ -70,6 +73,7 @@ class MyCards extends React.Component{
                 data.value = this.betValue.current.value;
             }
             socket.emit('bet', JSON.stringify(data));
+            document.getElementById('bet-value').value = "";
         }
     }
 
@@ -113,13 +117,31 @@ class MyCards extends React.Component{
 
 
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && this.props.gameStatusProps.isDraw && (
-                    <Typography variant="h1" align="center" className="my-cards-h1">Pareggio!</Typography>
+                    <Typography variant="h2" align="center" className="my-cards-h2">Pareggio!</Typography>
                 )}
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && this.props.gameStatusProps.isWinner && (
-                    <Typography variant="h1" align="center" className="my-cards-h1">Hai vinto!</Typography>
+                    <Typography variant="h2" align="center" className="my-cards-h2">Hai vinto!</Typography>
                 )}
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
-                    <Typography variant="h1" align="center" className="my-cards-h1">Hai perso... (vincitore: <b>{this.props.gameStatusProps.winner}</b>)</Typography>
+                    <Typography variant="h2" align="center" className="my-cards-h2">Hai perso... (vincitore: <b>{this.props.gameStatusProps.winner}</b>)</Typography>
+                )}
+
+
+                {
+                    //Show cards of the winner
+                }
+                {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
+                    <Box className="card-wrapper-box">
+                        {this.props.gameStatusProps.cards.map(card => {
+                            return (
+                                <Box className="card-box">
+                                    <Box className="card-img-wrapper">
+                                        <img draggable="false" src={CardImages[card]} className="card-img"/>
+                                    </Box>
+                                </Box>
+                            )
+                        })}
+                    </Box>
                 )}
     
 
@@ -128,7 +150,7 @@ class MyCards extends React.Component{
                     È il <b>tuo </b>turno
                     </Typography>
                 )}
-                {this.props.gameStatus && this.props.gameStatus !== "stop" && !this.props.isMyTurn && (
+                {this.props.gameStatus && (this.props.gameStatus === "change" || this.props.gameStatus === "bet") && !this.props.isMyTurn && (
                     <Typography variant="h4" className="my-cards-h4" align="center">
                     È il turno di <b>{this.props.turnPlayer}</b>
                     </Typography>

@@ -208,6 +208,8 @@ class Rooms{
     }
 
     sendAll(roomID, event, data){
+        console.log("broadcasting event", event);
+        console.log(data);
         const room = this.getRoom(roomID);
         const jsonData = JSON.stringify(data);
         for(const user of Object.values(room.users)){
@@ -276,7 +278,7 @@ class Rooms{
         this.setPlayingThisRound(roomID);
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
-        orderedPlayers.forEach(player => {
+        for(const player of orderedPlayers){
             //Send cards and...
             player.currentCards = [deck[i], deck[i+1], deck[i+2]];
             i += 3;
@@ -292,11 +294,12 @@ class Rooms{
                 'pocket': player.pocket
             }
             player.ws.emit('pocketUpdate', JSON.stringify(pocketData));
-            const potValueData = {
-                'potValue': room.gameStatus.potValue
-            }
-            player.ws.emit('potValueUpdate', JSON.stringify(potValueData));
-        })        
+
+        }     
+        const potValueData = {
+            'potValue': room.gameStatus.potValue
+        }
+        this.sendAll(roomID,'potValueUpdate', potValueData);
     }
 
     startChangeRound(roomID){
@@ -342,7 +345,7 @@ class Rooms{
         const potValueData = {
             'potValue': room.gameStatus.potValue
         }
-        user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+        this.sendAll(roomID,'potValueUpdate', potValueData);
         this.setUserStatus(roomID, userID, 'change');
     }
 
@@ -359,9 +362,16 @@ class Rooms{
     handleBet(roomID, userID, data){
         const room = this.getRoom(roomID);
         const numPlayers = room.gameStatus.playingThisRound.length;
-        room.gameStatus.properties.currentUserPosition += 1;
-        if(room.gameStatus.properties.currentUserPosition === numPlayers){
-            room.gameStatus.properties.currentUserPosition = 0;
+        //Finding next user
+        let nextUserFound = false;
+        while(!nextUserFound){
+            const currentUserPos = room.gameStatus.properties.currentUserPosition;
+            let candidateUserPosition = currentUserPos+1 === numPlayers ? 0 : currentUserPos+1;
+            room.gameStatus.properties.currentUserPosition = candidateUserPosition;
+            const candidateUser = Object.values(room.users).find(u => u.username === room.gameStatus.playingThisRound[candidateUserPosition]);
+            if(candidateUser.status !== "fold"){
+                nextUserFound = true;
+            }
         }
 
         const user = this.getUser(roomID, userID);
@@ -379,7 +389,7 @@ class Rooms{
             const potValueData = {
                 'potValue': room.gameStatus.potValue
             }
-            user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+            this.sendAll(roomID,'potValueUpdate', potValueData);
         }
         else if(action === "call" && room.gameStatus.properties.currentBet > 0){
             //Take points for calling
@@ -393,7 +403,7 @@ class Rooms{
             const potValueData = {
                 'potValue': room.gameStatus.potValue
             }
-            user.ws.emit('potValueUpdate', JSON.stringify(potValueData));
+            this.sendAll(roomID,'potValueUpdate', potValueData);
         }
 
         this.setUserStatus(roomID, userID, action);

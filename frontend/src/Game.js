@@ -68,7 +68,12 @@ class Game extends Component{
     }
 
     handlePotValueUpdate(json){
+        console.log("gotPotValueUpdate")
+        
         const data = JSON.parse(json);
+
+        console.log(data);
+
         this.setState({
             'potValue': data.potValue
         })
@@ -108,7 +113,7 @@ class Game extends Component{
                 this.handleStatusBet(data.currentBet, data.betUser);
                 break;
             case 'showdown':
-                this.handleStatusShowdown(data.isDraw, data.winner);
+                this.handleStatusShowdown(data.isDraw, data.winner, data.winnerCards);
                 break;
             case 'stop':
                 this.handleStatusStop();
@@ -137,7 +142,7 @@ class Game extends Component{
         })
     }
 
-    handleStatusShowdown(isDraw, winner){
+    handleStatusShowdown(isDraw, winner, cards){
         let isWinner = false;
         if(!isDraw && winner === this.props.username){
             isWinner = true;
@@ -146,7 +151,8 @@ class Game extends Component{
         const nextGameStatusProps = {
             'isDraw': isDraw,
             'isWinner': isWinner,
-            'winner': winner
+            'winner': winner,
+            'cards': cards
         }
         //Well a lot needs to be done here!
         this.setState({
@@ -224,49 +230,28 @@ class Game extends Component{
                     </Box>
                 )}
 
-                <Container>
-                    <Card>
-                        <CardContent>
-                            RoomID: {this.props.roomID} <br/>
-                            Username: {this.props.username} <br/>
-                            Pocket: {this.state.pocket} <br/>
-                            PotValue: {this.state.potValue} <br/>
-                            Position: {this.state.position} <br/>
-                            TableCards: {this.state.tableCards} <br/>
-                            MyCards: {this.state.myCards} <br/>
-                            GameStatus: {this.state.gameStatus} <br/>
-                            IsMyTurn: {this.state.isMyTurn ? ("True") : ("False")} <br/>
-                            <Button variant="contained" color="primary" onClick={() => this.handleStart('play')}>Partecipa</Button>
-                            <Button variant="contained" color="primary" onClick={() => this.handleStart('skip')}>Skip</Button>
-                        </CardContent>
-                    </Card>
-                </Container>
+                <Box className="game-container">
 
-            <Box className="game-container">
-
-
-                <Box className="table-box-container">
-                    <Table 
-                        cards={this.state.tableCards} 
-                        players={this.state.players} 
-                        potValue={this.state.potValue}
-                    />
+                    <Box className="table-box-container">
+                        <Table 
+                            cards={this.state.tableCards} 
+                            players={this.state.players} 
+                            potValue={this.state.potValue}
+                        />
+                    </Box>
+                    <Box className="cards-box-container">
+                        <MyCards 
+                            cards={this.state.myCards} 
+                            gameStatus={this.state.gameStatus} 
+                            gameStatusProps={this.state.gameStatusProps} 
+                            isMyTurn={this.state.isMyTurn} 
+                            turnPlayer={this.state.turnPlayer}
+                            roomID={this.props.roomID}
+                            pocket={this.state.pocket}
+                            minBet={this.props.minBet}
+                        />
+                    </Box>
                 </Box>
-                <Box className="cards-box-container">
-                    <MyCards 
-                        cards={this.state.myCards} 
-                        gameStatus={this.state.gameStatus} 
-                        gameStatusProps={this.state.gameStatusProps} 
-                        isMyTurn={this.state.isMyTurn} 
-                        turnPlayer={this.state.turnPlayer}
-                        roomID={this.props.roomID}
-                        pocket={this.state.pocket}
-                        minBet={this.props.minBet}
-                    />
-                </Box>
-            </Box>
-
-
 
             </Box>
         )
