@@ -1,7 +1,7 @@
 const { deck, generateID, shuffleArray } = require("./util");
 const cloneDeep = require('lodash.clonedeep');
 
-const DEFAULT_POCKET_VALUE = process.env.DEFAULT_POCKET_VALUE || 1000;
+const DEFAULT_POCKET_VALUE = process.env.DEFAULT_POCKET_VALUE || 0;
 
 class Rooms{
     constructor(){
@@ -287,7 +287,8 @@ class Rooms{
         const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
-        room.gameStatus.entranceFee = Math.max(room.gameProperties.minBet, room.gameStatus.properties.currentBet);
+
+        room.gameStatus.entranceFee = rome.gameStatus.properties.isDraw ? room.gameStatus.properties.currentBet : room.gameProperties.minBet;
 
         for(const user of Object.values(room.users)){
             user.status = noTaxPlayers.includes(user.username) ? "play" : "wait";
