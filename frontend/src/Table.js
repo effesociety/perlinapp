@@ -1,9 +1,8 @@
 import {useState, useEffect} from 'react';
 import CardImages from './CardImages';
-import Box from "@material-ui/core/Box";
+import { Box, Typography } from '@material-ui/core';
 import CoinImg from "./images/coin.png";
 import 'animate.css/animate.css'
-import { Typography } from '@material-ui/core';
 
 const Table = (props) =>{
     const [cards, setCards] = useState([]);

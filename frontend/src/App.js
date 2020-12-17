@@ -1,5 +1,7 @@
 import React from 'react';
 import { socket } from "./services/socket";
+import {isMobile} from 'react-device-detect';
+import YouShallNotPass from './YouShallNotPass';
 import Header from './Header';
 import Enter from './Enter';
 import Game from './Game';
@@ -82,18 +84,30 @@ class App extends React.Component{
     }
     
     render(){
-        return (
-            <div className="App">
-              <Header />
-              {this.state.isPlaying ? (
-                <Game {...this.state.gameInfo} />
-              ) : (
-                <Enter/>
-              )}
-              <Footer/>
-              <CustomSnackbar {...this.state.snackbarProps} closeSnackbar={this.closeSnackbar}/>
-            </div>
-          );
+        if(isMobile){
+            return(
+                <div className="App">
+                    <Header/>
+                    <YouShallNotPass/>
+                    <Footer/>
+                </div>
+            )
+        }
+        else{
+            return (
+                <div className="App">
+                  <Header />
+                  {this.state.isPlaying ? (
+                    <Game {...this.state.gameInfo} />
+                  ) : (
+                    <Enter/>
+                  )}
+                  <Footer/>
+                  <CustomSnackbar {...this.state.snackbarProps} closeSnackbar={this.closeSnackbar}/>
+                </div>
+            );
+        }
+
     }
 }
 

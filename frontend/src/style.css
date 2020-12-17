@@ -3,6 +3,21 @@ body {
     margin: 0;
 }
 
+.you-shall-not-pass{
+    width: 90vw;
+    height: calc(100vh - 260px);
+    display: inline-flex;
+    align-items: center;
+    margin-left:5vw;
+    text-align: center;
+}
+
+.you-shall-not-pass-h2{
+    width:100%;
+    color:#fff;
+    font-size: 1.5rem!important;
+}
+
 .no-scroll{
     overflow:hidden;
 }
