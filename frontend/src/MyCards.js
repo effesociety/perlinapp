@@ -123,7 +123,7 @@ class MyCards extends React.Component{
                     <Typography variant="h2" align="center" className="my-cards-h2">Hai vinto!</Typography>
                 )}
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
-                    <Typography variant="h2" align="center" className="my-cards-h2">Hai perso... (vincitore: <b>{this.props.gameStatusProps.winner}</b>)</Typography>
+                    <Typography variant="h2" align="center" className="my-cards-h2">Hai perso... (vincitore: <b>{this.props.gameStatusProps.winner[0]}</b>)</Typography>
                 )}
 
 

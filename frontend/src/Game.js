@@ -144,7 +144,7 @@ class Game extends Component{
 
     handleStatusShowdown(isDraw, winner, cards){
         let isWinner = false;
-        if(!isDraw && winner === this.props.username){
+        if(!isDraw && winner[0] === this.props.username){
             isWinner = true;
         }
 
