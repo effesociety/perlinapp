@@ -288,7 +288,7 @@ class Rooms{
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
 
-        room.gameStatus.entranceFee = rome.gameStatus.properties.isDraw ? room.gameStatus.properties.currentBet : room.gameProperties.minBet;
+        room.gameStatus.entranceFee = room.gameStatus.properties.isDraw ? room.gameStatus.properties.currentBet : room.gameProperties.minBet;
 
         for(const user of Object.values(room.users)){
             user.status = noTaxPlayers.includes(user.username) ? "play" : "wait";
