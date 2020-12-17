@@ -24,7 +24,7 @@ const Table = (props) =>{
 
                     return (
                         <Box className={playerClassName}>
-                            <Typography className="player-name-p">{player}</Typography>
+                            <Typography className="player-name-p">{player.substring(0,2)}</Typography>
                         </Box>
                     )
                 })}

@@ -206,7 +206,7 @@ class MyCards extends React.Component{
 
                 <Box className="pocket-box">
                     <img draggable="false" src={PocketImg} className="pocket-img"/>
-                    <Typography><b>{this.props.pocket}</b> -  Puntata minima: <b>{this.props.minBet}</b></Typography>
+                    <Typography><b>{this.props.pocket}</b>  (Puntata minima: <b>{this.props.minBet}</b>)</Typography>
                 </Box>
 
                 {this.props.gameStatus && this.props.gameStatus === "bet" && this.props.gameStatusProps.currentBet > 0 && (

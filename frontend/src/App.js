@@ -35,12 +35,12 @@ class App extends React.Component{
     
     handleResize(){
         const isSizeNotAllowed = window.innerWidth < window.innerHeight;
-        this.setState({
-            'isSizeNotAllowed': isSizeNotAllowed,
-            'isPlaying': false,
-            'gameInfo': {}
-        });    
         if(isSizeNotAllowed){
+            this.setState({
+                'isSizeNotAllowed': isSizeNotAllowed,
+                'isPlaying': false,
+                'gameInfo': {}
+            });    
             socket.disconnect();
         }
     }

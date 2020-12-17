@@ -161,7 +161,12 @@ class Rooms{
         //Add info to socket for quicker disconnect management
         ws.join(roomID);
 		ws.roomID = roomID;
-		ws.userID = userID;
+        ws.userID = userID;
+        //Update ranking
+        const rankingUpdateData = {
+            'ranking': this.getRanking(roomID)
+        }
+        this.sendAll(roomID, 'rankingUpdate', rankingUpdateData);
         return res;
     }
 
