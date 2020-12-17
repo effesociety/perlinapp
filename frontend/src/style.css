@@ -339,6 +339,20 @@ Game.js
     left:20px;
     margin:auto;
 }
+
+.show-ranking-btn{
+    color:#fff!important;
+    border-radius: 100%!important;
+    padding:20px!important;
+    position:fixed!important;
+    bottom:50px;
+    right:50px;
+}
+
+.show-ranking-btn .MuiButton-startIcon{
+    margin-right:0!important;
+}
+
 /*
 Footer
 */

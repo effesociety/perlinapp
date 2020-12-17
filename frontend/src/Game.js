@@ -1,8 +1,10 @@
 import {Component} from 'react';
 import { socket } from "./services/socket";
 import { Box, Card, CardContent, Button, Typography} from "@material-ui/core/";
+import TimelineIcon from '@material-ui/icons/Timeline';
 import MyCards from './MyCards';
 import Table from './Table';
+import Ranking from './Ranking';
 import 'animate.css/animate.css'
 
 class Game extends Component{
@@ -19,7 +21,8 @@ class Game extends Component{
             'GameStatusProps': {},
             'isMyTurn': false,
             'turnPlayer': "",
-            'startBtnsDisabled': false
+            'startBtnsDisabled': false,
+            'showRanking': false
         }
         this.handleNewPositions = this.handleNewPositions.bind(this);
         this.handlePocketUpdate = this.handlePocketUpdate.bind(this);
@@ -32,6 +35,7 @@ class Game extends Component{
         this.handleStatusBet = this.handleStatusBet.bind(this);
         this.handleStatusShowdown = this.handleStatusShowdown.bind(this);
         this.handleStatusStop = this.handleStatusStop.bind(this);
+        this.renderRanking = this.renderRanking.bind(this);
     }
 
     componentDidMount(){  
@@ -187,6 +191,24 @@ class Game extends Component{
         }
     }
     
+    renderRanking(){
+        if(this.state.showRanking){
+            return (
+                <Ranking/>
+            )
+        }
+        else{
+            return (
+                <Button 
+                startIcon={<TimelineIcon />} 
+                variant ="contained" 
+                color="primary" 
+                className="show-ranking-btn animate__animated animate__slideInUp" />
+            )
+        }
+    }
+
+
     render(){
 
         if(this.state.gameStatus === "stop"){
@@ -251,6 +273,9 @@ class Game extends Component{
                             minBet={this.props.minBet}
                         />
                     </Box>
+
+                    {this.renderRanking()}
+
                 </Box>
 
             </Box>

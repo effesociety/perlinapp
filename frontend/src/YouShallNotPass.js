@@ -1,5 +1,4 @@
 import { Box, Typography } from '@material-ui/core';
-import Header from './Header';
 
 const YouShallNotPass = () => {
     return (
