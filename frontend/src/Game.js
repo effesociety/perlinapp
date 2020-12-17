@@ -22,6 +22,7 @@ class Game extends Component{
             'isMyTurn': false,
             'turnPlayer': "",
             'startBtnsDisabled': false,
+            'ranking': [],
             'showRanking': false
         }
         this.handleNewPositions = this.handleNewPositions.bind(this);
@@ -35,7 +36,9 @@ class Game extends Component{
         this.handleStatusBet = this.handleStatusBet.bind(this);
         this.handleStatusShowdown = this.handleStatusShowdown.bind(this);
         this.handleStatusStop = this.handleStatusStop.bind(this);
+        this.handleRankingUpdate = this.handleRankingUpdate.bind(this);
         this.renderRanking = this.renderRanking.bind(this);
+        this.setRankingBtn = this.setRankingBtn.bind(this);
     }
 
     componentDidMount(){  
@@ -46,6 +49,7 @@ class Game extends Component{
         socket.on('cards', this.handleMyCards);
         socket.on('status', this.handleStatus);
         socket.on('turn', this.handleTurn);
+        socket.on('rankingUpdate', this.handleRankingUpdate);
     }
 
     handleNewPositions(json){
@@ -191,10 +195,23 @@ class Game extends Component{
         }
     }
     
+    handleRankingUpdate(json){
+        const data = JSON.parse(json);
+        this.setState({
+            'ranking': data.ranking
+        })
+    }
+
+    setRankingBtn(state){
+        this.setState({
+            'showRanking': state
+        })
+    }
+
     renderRanking(){
         if(this.state.showRanking){
             return (
-                <Ranking/>
+                <Ranking users={this.state.ranking} onClose={() => this.setRankingBtn(false)}/>
             )
         }
         else{
@@ -203,11 +220,11 @@ class Game extends Component{
                 startIcon={<TimelineIcon />} 
                 variant ="contained" 
                 color="primary" 
-                className="show-ranking-btn animate__animated animate__slideInUp" />
+                className="show-ranking-btn animate__animated animate__slideInUp" 
+                onClick={() => this.setRankingBtn(true)}/>
             )
         }
     }
-
 
     render(){
 

@@ -1,4 +1,5 @@
 const { deck, generateID, shuffleArray } = require("./util");
+const cloneDeep = require('lodash.clonedeep');
 
 const DEFAULT_POCKET_VALUE = process.env.DEFAULT_POCKET_VALUE || 1000;
 
@@ -36,41 +37,22 @@ class Rooms{
     }
 
     getActivePlayers(roomID){
-        return Object.values(this.data[roomID].users).filter(user => user.active).length;
+        return Object.values(this.data[roomID].users).filter(user => user.active);
     }
 
     getStatusPlayers(roomID, status){
-        return Object.values(this.data[roomID].users).filter(user => user.active && user.status === status).length;
+        return Object.values(this.data[roomID].users).filter(user => user.active && user.status === status)
     }
-
+    
     getOrderedPlayers(roomID, status){
-        let data = [];
-        const room = this.getRoom(roomID);
-        const numPlayers = this.getStatusPlayers(roomID, status);
-        for(let i = 0; i < numPlayers; i++){
-            Object.values(room.users).forEach(user => {
-                if(user.position === i+1){
-                    data.push(user);
-                }
-            })
-        }
-        return data;
-    }
-
-    getNoTaxPlayers(roomID){
-        const room = this.getRoom(roomID);
-        let data = [];
-        Object.values(room.users).forEach(user => {
-            if(user.status === 'raise' || user.status === 'call'){
-                data.push(user);
-            }
-        });
-        return data;
+        const playersByStatus = Object.values(this.data[roomID].users).filter(user => user.active && user.status === status);
+        const orderedPlayers = playersByStatus.sort((a,b) => parseInt(a.position) - parseInt(b.position));
+        return orderedPlayers;
     }
 
     setPlayingThisRound(roomID){
         const room = this.getRoom(roomID);
-        let users = this.getOrderedPlayers(roomID, 'play');
+        let users = this.getStatusPlayers(roomID, 'play');
         users.forEach(user => {
             room.gameStatus.playingThisRound.push(user.username);
         })
@@ -131,7 +113,7 @@ class Rooms{
     }
 
     addPlayer(roomID, username, ws){
-        const position = this.getActivePlayers(roomID)+1;
+        const position = this.getActivePlayers(roomID).length+1;
         const room = this.getRoom(roomID);
         let newUser = {
             'username': username,
@@ -183,6 +165,17 @@ class Rooms{
         return res;
     }
 
+    checkIfBetIsOver(roomID){
+        const room = this.getRoom(roomID);
+        const numFoldedPlayers = this.getStatusPlayers(roomID, "fold").length;
+        const numCalledPlayers = this.getStatusPlayers(roomID, "call").length;
+        const numRaisePlayers = this.getStatusPlayers(roomID, "raise").length;
+        const numPlayingThisRound = room.gameStatus.playingThisRound.length;
+        const condition1 = numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === numPlayingThisRound; //1 raise and the others called/folded
+        const condition2 = numFoldedPlayers === numPlayingThisRound-1; //Everybody except one folded
+        return condition1 || condition2;
+    } 
+
     /**
      * 
      * @param {String} roomID 
@@ -192,22 +185,67 @@ class Rooms{
      * It returns False if the room became empty and is closed
      */
     removePlayer(roomID, userID){
-        if(this.data[roomID] && this.data[roomID].users[userID]){
+        const room = this.getRoom(roomID);
+        if(room && room.users[userID]){
             const userToRemove = this.getUser(roomID,userID);
             userToRemove.active = false;
             //Check if the room is empty (everyone is inactive)
-            if(this.getActivePlayers(roomID) === 0){
+            if(this.getActivePlayers(roomID).length === 0){
                 this.closeRoom(roomID);
                 return false;
             }
             else{
+                const userIndex = room.gameStatus.playingThisRound.findIndex(u => u === userToRemove.username);
+                room.gameStatus.playingThisRound.splice(userIndex, 1);
                 //Change position for everyone with a higher number in the room
-                const currentUserPosition = userToRemove.position;
-                Object.values(this.data[roomID].users).forEach(u => {
-                    if(u.active && u.position > currentUserPosition){
+                const removedUserPosition = userToRemove.position;
+                Object.values(room.users).forEach(u => {
+                    if(u.active && u.position > removedUserPosition){
                         u.position -= 1;
                     }
                 })
+                //
+                const currentStatus = room.gameStatus.currentStatus;
+                if(currentStatus === "change"){
+                    //Find next player that has to change
+					const nextUserPosition = room.gameStatus.properties.currentUserPosition;
+                    const nextPlayer = room.gameStatus.playingThisRound[nextUserPosition];
+                    //TO-DO: Fix error in bet state
+                    if(nextPlayer){
+                        const turnData = {
+                            'turn': nextPlayer
+                        }
+                        this.sendAll(roomID, 'turn', turnData);
+                    }
+                    else{
+                        //Go to next state
+                        this.startBetRound(roomID);
+                    }
+                }
+                else if(currentStatus === "bet"){
+                    //Find next player that has to bet
+                    const isBetOver = this.checkIfBetIsOver(roomID);
+                    if(isBetOver){
+                        //Go to next state
+                        this.startShowdown(roomID);
+                    }
+                    else{
+                        const numPlayers = room.gameStatus.playingThisRound.length;
+                        //Finding next user
+                        let nextUserFound = false;
+                        //Just a little trick
+                        room.gameStatus.properties.currentUserPosition -= 1;
+                        while(!nextUserFound){
+                            const currentUserPos = room.gameStatus.properties.currentUserPosition;
+                            let candidateUserPosition = currentUserPos+1 === numPlayers ? 0 : currentUserPos+1;
+                            room.gameStatus.properties.currentUserPosition = candidateUserPosition;
+                            const candidateUser = Object.values(room.users).find(u => u.username === room.gameStatus.playingThisRound[candidateUserPosition]);
+                            if(candidateUser.status !== "fold"){
+                                nextUserFound = true;
+                            }
+                        }
+                    }
+                }
                 return true;
             }
         }
@@ -230,28 +268,67 @@ class Rooms{
             }
         }
     }
+    
+    getRanking(roomID){
+        const room = this.getRoom(roomID);
+        const ranking = Object.values(room.users).map(u => {
+            const userRankingInfo = {
+                'active': u.active,
+                'username': u.username,
+                'pocket': u.pocket
+            }
+            return userRankingInfo;
+        })
+        return ranking;
+    }
 
     newRound(roomID){
         const room = this.getRoom(roomID);
+        const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
-        let noTaxPlayers = [];
+        room.gameStatus.entranceFee = Math.max(room.gameProperties.minBet, room.gameStatus.properties.currentBet);
 
         for(const user of Object.values(room.users)){
-            user.status = "wait";
+            user.status = noTaxPlayers.includes(user.username) ? "play" : "wait";
             user.currentCards = [];
         }
-
-        if(room.gameStatus.properties.isDraw){
-            room.gameStatus.entranceFee = room.gameStatus.properties.currentBet;
-            noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
-            for(const player of noTaxPlayers){
-                player.status = "play";
-            }
-            
-        }
         
-        room.gameStatus.properties.noTaxPlayers = noTaxPlayers;
+        room.gameStatus.properties = {
+            'noTaxPlayers': noTaxPlayers
+        }
+
+        if(noTaxPlayers.length === this.getActivePlayers(roomID).length){
+            this.roundSetup(roomID);
+            const tableCards = this.getTableCards(roomID);
+            const data = {
+                'tableCards': tableCards
+            }
+            this.sendAll(roomID, 'tableCards', data);
+            //Go to next state
+            this.startChangeRound(roomID);
+            const numChangeableCards = room.gameStatus.properties.numChangeableCards;
+            const statusData = {
+                'status': 'change',
+                'numChangeableCards': numChangeableCards
+            }
+            this.sendAll(roomID, 'status', statusData);
+            //Find first player that has to change
+            const firstPlayer = this.getOrderedPlayers(roomID, 'play')[0];
+            const turnData = {
+                'turn': firstPlayer.username
+            }
+            console.log("The first player that has to change is")
+            console.log(turnData);
+            this.sendAll(roomID, 'turn', turnData);
+        }
+        else{
+            const statusData = {
+                'status': 'stop',
+            }
+            console.log(statusData);
+            this.sendAll(roomID, 'status', statusData);
+        }
     }
 
     calculateScore(cards){
@@ -298,7 +375,7 @@ class Rooms{
         this.setPlayingThisRound(roomID);
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
-        let noTaxPlayers = room.gameStatus.properties.noTaxPlayers.map(user => user.username);
+        const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
         
         for(const player of orderedPlayers){
             //Send cards and...
@@ -312,14 +389,12 @@ class Rooms{
             //Who partecipated before doesn't have to pay
             if(!noTaxPlayers.includes(player.username)){
                 player.pocket -= parseFloat(room.gameStatus.entranceFee);
-            }
-                        
-            room.gameStatus.potValue += parseFloat(room.gameStatus.entranceFee);
-            const pocketData = {
-                'pocket': player.pocket
-            }
-            player.ws.emit('pocketUpdate', JSON.stringify(pocketData));
-
+                room.gameStatus.potValue += parseFloat(room.gameStatus.entranceFee);
+                const pocketData = {
+                    'pocket': player.pocket
+                }
+                player.ws.emit('pocketUpdate', JSON.stringify(pocketData));
+            }         
         }     
         const potValueData = {
             'potValue': room.gameStatus.potValue
@@ -382,6 +457,18 @@ class Rooms{
             'currentBet': 0,
             'betUser': ''
         }
+        const statusData = {
+            'status': 'bet',
+            'currentBet': 0,
+            'betUser': ''
+        }
+        this.sendAll(roomID, 'status', statusData);
+        //Find first player that has to bet
+        const firstPlayer = this.getOrderedPlayers(roomID, 'change')[0];
+        const turnData = {
+            'turn': firstPlayer.username
+        }
+        this.sendAll(roomID, 'turn', turnData);
     }
 
     handleBet(roomID, userID, data){
@@ -512,11 +599,10 @@ class Rooms{
             this.sendAll(roomID, 'potValueUpdate', potValueUpdateData);
         }
         else{
-            noTaxPlayers = this.getNoTaxPlayers(roomID);
+            noTaxPlayers = this.getStatusPlayers(roomID, 'raise').concat(this.getStatusPlayers(roomID, 'call')).map(u => u.username);
         }
         
         const currentBet = room.gameStatus.properties.currentBet;
-
         room.gameStatus.properties = {
             'score':  scoreOnTheFloor,
             'isDraw': isDraw,
@@ -525,6 +611,26 @@ class Rooms{
             'noTaxPlayers': noTaxPlayers,
             'currentBet': currentBet
         }
+
+        //At the end of every round update the ranking
+        const rankingUpdateData = {
+            'ranking': this.getRanking(roomID)
+        }
+        this.sendAll(roomID, 'rankingUpdate', rankingUpdateData);
+
+        //Update status
+        const statusData = {
+            'status': 'showdown',
+            'isDraw': room.gameStatus.properties.isDraw,
+            'winner': room.gameStatus.properties.winner,
+            'winnerCards': room.gameStatus.properties.winnerCards
+        }
+        this.sendAll(roomID, 'status',statusData);
+
+        //Start new round in 10 sec
+        setTimeout(() => {
+            this.newRound(roomID);
+        }, 10000);
     }
 }
 

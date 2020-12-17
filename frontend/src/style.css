@@ -353,6 +353,76 @@ Game.js
     margin-right:0!important;
 }
 
+.ranking-wrapper{
+    width: 20vw;
+    height:100%;
+    position: fixed!important;
+    right:0;
+    bottom:0;
+    margin-top:20px;
+    background-color: #3f51b5;
+    text-align:center;
+}
+
+.ranking-card{
+    width:calc(100% - 40px);
+    margin-left:20px;
+    margin-top:20px;
+    padding: 5px inherit!important;
+}
+
+.ranking-card-content{
+    padding: 10px!important;
+    display: inline-flex;
+}
+
+.ranking-status-green, .ranking-status-red{
+    font-weight: 1.5em;
+    margin-right:10px;
+}
+
+.ranking-status-green{
+    color: rgb(41, 182, 41);
+}
+
+.ranking-status-red{
+    color:rgb(231, 57, 57);
+}
+
+.ranking-inactive-player{
+    color: rgb(138, 138, 138);
+}
+
+
+.ranking-h3{
+    color: #fff;
+    margin: 30px 0!important;
+    font-weight: 200!important;
+    font-size: 2rem!important;
+}
+
+.ranking-h4{
+    color: #fff;
+}
+
+.ranking-h6{
+    color: #fff;
+    font-weight: 400!important;
+}
+
+.close-ranking-btn{
+    border-radius: 100%!important;
+    padding:20px!important;
+    position: fixed!important;
+    right:10px;
+    top:20px;
+    background-color: #fff!important;
+}
+
+.close-ranking-btn .MuiButton-startIcon{
+    margin-right:0!important;
+}
+
 /*
 Footer
 */

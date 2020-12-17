@@ -85,7 +85,7 @@ io.on('connection',(socket) => {
 		const roomID = data.roomID;
 		const username = data.username;
 
-		if(validator.isAlphanumeric(username) && !validator.isEmpty(username) && rooms.getRoom(roomID) && rooms.getActivePlayers(roomID) < MAX_NUM_PLAYERS){
+		if(validator.isAlphanumeric(username) && !validator.isEmpty(username) && rooms.getRoom(roomID) && rooms.getActivePlayers(roomID).length < MAX_NUM_PLAYERS){
 			const res = rooms.addPlayer(roomID, username, socket);
 			rooms.getInfo();
 			console.log("User added to room");
@@ -112,7 +112,7 @@ io.on('connection',(socket) => {
 			console.log(data);
 			socket.emit('error', JSON.stringify(data));
 		}
-		else if(rooms.getActivePlayers(roomID) >= MAX_NUM_PLAYERS){
+		else if(rooms.getActivePlayers(roomID).length >= MAX_NUM_PLAYERS){
 			const data = {
 				'errMsg': "Room piena!",
 			}
@@ -128,9 +128,10 @@ io.on('connection',(socket) => {
 			rooms.setUserStatus(socket.roomID, socket.userID, data.action);
 
 			const room = rooms.getRoom(socket.roomID);
-			const isEverybodyReady = Object.values(room.users).every(u => u.status === "play" || u.status === "skip");
+			const isEverybodyReady = rooms.getActivePlayers(socket.roomID).every(u => u.status === "play" || u.status === "skip");
+			const moreThanOnePlayer = Object.values(room.users).filter(u => u.status === "play").length > 1;
 
-			if(isEverybodyReady){
+			if(isEverybodyReady && moreThanOnePlayer){
 				rooms.roundSetup(socket.roomID);
 				const tableCards = rooms.getTableCards(socket.roomID);
 				const data = {
@@ -170,22 +171,10 @@ io.on('connection',(socket) => {
 				const data = JSON.parse(json);
 				rooms.changeCards(socket.roomID, socket.userID, data.cards);
 
-				const numReadyPlayers = rooms.getStatusPlayers(socket.roomID, "change");
+				const numReadyPlayers = rooms.getStatusPlayers(socket.roomID, "change").length;
 				if(numReadyPlayers === room.gameStatus.playingThisRound.length){
 					//Go to next state
 					rooms.startBetRound(socket.roomID);
-					const statusData = {
-						'status': 'bet',
-						'currentBet': 0,
-						'betUser': ''
-					}
-					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
-					//Find first player that has to bet
-					const firstPlayer = rooms.getOrderedPlayers(socket.roomID, 'change')[0];
-					const turnData = {
-						'turn': firstPlayer.username
-					}
-					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 				}
 				else{
 					//Find next player that has to change
@@ -224,9 +213,9 @@ io.on('connection',(socket) => {
 				}
 
 				//Check if the bet round is over and go to next state
-				const numFoldedPlayers = rooms.getStatusPlayers(socket.roomID, "fold");
-				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call");
-				const numRaisePlayers = rooms.getStatusPlayers(socket.roomID, "raise");
+				const numFoldedPlayers = rooms.getStatusPlayers(socket.roomID, "fold").length;
+				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call").length;
+				const numRaisePlayers = rooms.getStatusPlayers(socket.roomID, "raise").length;
 
 				const numPlayingThisRound = room.gameStatus.playingThisRound.length;
 				const condition1 = numRaisePlayers === 1 && numRaisePlayers + numCalledPlayers + numFoldedPlayers === numPlayingThisRound; //1 raise and the others called/folded
@@ -235,24 +224,6 @@ io.on('connection',(socket) => {
 				if(condition1 || condition2){
 					//Go to next state
 					rooms.startShowdown(socket.roomID);
-					const statusData = {
-						'status': 'showdown',
-						'isDraw': room.gameStatus.properties.isDraw,
-						'winner': room.gameStatus.properties.winner,
-						'winnerCards': room.gameStatus.properties.winnerCards
-					}
-					console.log(statusData);
-					io.to(socket.roomID).emit('status',JSON.stringify(statusData));
-
-					setTimeout(() => {
-						rooms.newRound(socket.roomID);
-						const statusData = {
-							'status': 'stop',
-						}
-						console.log(statusData);
-						io.to(socket.roomID).emit('status',JSON.stringify(statusData));
-					}, 10000);
-
 				}
 				else{
 					//Find next player that has to bet
@@ -299,7 +270,7 @@ const cloneDeep = require('lodash.clonedeep');
 app.get('/rooms', (req, res) => {
 	const clonedRooms = {}
 	for(const room of Object.keys(rooms.data)){
-		const gameProperties = rooms.data[room].gameProperties;
+		let gameProperties = rooms.data[room].gameProperties;
 		const gameStatus = rooms.data[room].gameStatus;
 		let users = {};
 		const oldUsers = rooms.data[room].users;
@@ -312,6 +283,6 @@ app.get('/rooms', (req, res) => {
 			'users': users
 		}
 	}
-	
+
 	res.send(clonedRooms);
 });
