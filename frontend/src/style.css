@@ -82,6 +82,7 @@ Game.js
 .game-container{
     display:flex;
     align-items: center;
+    width: 100%;
     height:calc(100vh - 260px);
 }
 
@@ -99,15 +100,12 @@ Game.js
 }
 
 .potvalue-box{
-    width:35%;
     margin:auto;
-    left:0;
-    right:0;
-    position: absolute;
-    top:20vh;
     color: #fff;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    margin-top: 40px;
 }
 
 .potvalue-box > p{
@@ -150,6 +148,7 @@ Game.js
     background-position: center;
     background-size: contain;
     width:100%; 
+    height: 100%;
     text-align: center;
 }
  
@@ -157,24 +156,32 @@ Game.js
     height: calc(100vh - 260px);
 }
 
-.table-cards-wrapper-box{
-    width:400px;
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin:auto;
-    display: flex;
-    margin-top: calc(95vh / 2 - 75px);
+.table-cards-outer-wrapper-box{
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height:100%;
+}
+
+.table-cards-inner-wrapper-box{
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top:40px;
 }
 
 .table-cards-box{
-    width:84px;
     flex: 1;
+    height: 13vh;
+}
+
+.table-cards-img-wrapper{
+    margin: 0 2vh;
 }
 
 .table-cards-img{
-    width:84px;
-    height:150px;
+    height:13vh;
     border-radius:5px;
 }
 
@@ -184,77 +191,89 @@ Game.js
     position: absolute;
     background-color: rgba(255, 255, 255, 0.39);
     border-radius:100%;
-    width:4vw;
-    height:4vw;
+    width:6vh;
+    height:6vh;
 }
 
 .players-position > *{
     line-height: 4vw!important;
 }
 
+.player-name-p{
+    width:100%;
+    height:100%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .players-position-1{
-    margin-top:14vh;
-    left: 64.5%;
+    margin-top: calc(14vh - 36.4px);
+    left: calc(50% + 18vh - 23.4px);
     transform: rotate(35deg)
 }
 
 .players-position-2{
-    margin-top:33vh;
-    left: 75%;
+    margin-top: calc(34vh - 88.4px);
+    left: calc(50% + 30vh - 39px);
     transform: rotate(70deg)
 }
 
 .players-position-3{
-    margin-top:56vh;
-    left: 75%;
+    margin-top: calc(59vh - 153px);
+    left: calc(50% + 30vh - 39px);
     transform: rotate(110deg)
 }
 
 .players-position-4{
-    margin-top:75vh;
-    left: 64.5%;
+    margin-top:calc(80vh - 208px);
+    left: calc(50% + 18vh - 23.4px);
     transform: rotate(150deg)
 }
 
 .players-position-5{
-    margin-top:82vh;
-    left: 47%;
+    margin-top:calc(87vh - 226px);
+    left: calc(50% - 3.5vh + 4.5px);
     transform: rotate(180deg)
 }
 
 .players-position-6{
-    margin-top:75vh;
-    left: 30%;
+    margin-top:calc(80vh - 208px);
+    left: calc(50% - 23.5vh + 30.5px);
     transform: rotate(210deg)
 }
 
 .players-position-7{
-    margin-top:56vh;
-    left: 18.5%;
+    margin-top: calc(59vh - 153px);
+    left: calc(50% - 36.5vh + 47.5px);
     transform: rotate(250deg)
 }
 
 .players-position-8{
-    margin-top:33vh;
-    left: 18.5%;
+    margin-top: calc(34vh - 88.4px);
+    left: calc(50% - 36.5vh + 47.5px);
     transform: rotate(290deg)
 }
 
 .players-position-9{
-    margin-top:13vh;
-    left: 30.5%;
+    margin-top: calc(14vh - 36.4px);
+    left: calc(50% - 23.5vh + 30.5px);
     transform: rotate(325deg)
 }
 
-.card-wrapper-box{
+.card-outer-wrapper-box{
     width:100%;
-    margin:auto;
-    display: flex;
+    display: inline-flex;
+    justify-content: center;
+}
+
+.card-inner-wrapper-box{
+    display: inline-flex;
 }
 
 .card-box{
-    width:112px;
     flex: 1;
+    margin: 0 20px;
 }
 
 .my-cards-h1{
@@ -272,13 +291,10 @@ Game.js
 }
 
 .card-img-wrapper-selectable{
-    width:112px;
-    height:200px;
     border-radius:5px;
     border:10px solid rgb(133, 133, 133);
     background-color: #fff;
     cursor: pointer;
-    margin:auto;
 }
 
 .card-img-wrapper-selectable:hover{
@@ -286,27 +302,20 @@ Game.js
 }
 
 .card-img-wrapper{
-    width:112px;
-    height:200px;
     border-radius:5px;
     border:10px solid rgb(133, 133, 133);
     background-color: #fff;
-    margin:auto;
 }
 
 .card-img-wrapper-selected{
-    width:112px;
-    height:200px;
     border-radius:5px;
     border: 10px solid rgb(29, 95, 182);
     background-color: #fff;
     cursor: pointer;
-    margin:auto;
 }
 
 .card-img{
-    width:112px;
-    height:200px;
+    height:15vh;
     border-radius:5px;
 }
 
@@ -346,7 +355,7 @@ Game.js
     padding:20px!important;
     position:fixed!important;
     bottom:50px;
-    right:50px;
+    left:50px;
 }
 
 .show-ranking-btn .MuiButton-startIcon{
@@ -357,11 +366,12 @@ Game.js
     width: 20vw;
     height:100%;
     position: fixed!important;
-    right:0;
+    left:0;
     bottom:0;
     margin-top:20px;
     background-color: #3f51b5;
     text-align:center;
+    overflow-y: auto;
 }
 
 .ranking-card{
@@ -396,12 +406,16 @@ Game.js
 
 .ranking-h3{
     color: #fff;
-    margin: 30px 0!important;
     font-weight: 200!important;
     font-size: 2rem!important;
+    margin-top:90px!important;
+    margin-bottom: 30px!important;
 }
 
 .ranking-h4{
+    width: 90%;
+    margin-left:5%!important;
+    font-size: 1.5rem!important;
     color: #fff;
 }
 

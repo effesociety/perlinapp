@@ -127,16 +127,18 @@ class MyCards extends React.Component{
                     //Show cards of the winner
                 }
                 {this.props.gameStatus && this.props.gameStatus === "showdown" && !this.props.gameStatusProps.isDraw && !this.props.gameStatusProps.isWinner && (
-                    <Box className="card-wrapper-box">
-                        {this.props.gameStatusProps.cards.map(card => {
-                            return (
-                                <Box className="card-box">
-                                    <Box className="card-img-wrapper">
-                                        <img draggable="false" src={CardImages[card]} className="card-img"/>
+                    <Box className="card-outer-wrapper-box">
+                        <Box className="card-inner-wrapper-box">
+                            {this.props.gameStatusProps.cards.map(card => {
+                                return (
+                                    <Box className="card-box">
+                                        <Box className="card-img-wrapper">
+                                            <img draggable="false" src={CardImages[card]} className="card-img"/>
+                                        </Box>
                                     </Box>
-                                </Box>
-                            )
-                        })}
+                                )
+                            })}
+                        </Box>
                     </Box>
                 )}
     
@@ -157,20 +159,22 @@ class MyCards extends React.Component{
                 ) : (
                     <Typography variant="h2" align="center" className="my-cards-h2" gutterBottom>Le tue carte</Typography>
                 )}
-                <Box className="card-wrapper-box">
-                    {this.props.cards.map(card => {
-    
-                        const selectableImg = this.props.gameStatus === "change" ? 'card-img-wrapper-selectable' : 'card-img-wrapper';
-                        const imgWrapperClassname = this.state.selectedCards.includes(card) && isSelectable ? 'card-img-wrapper-selected' : selectableImg;
-                        
-                        return (
-                            <Box className="card-box">
-                                <Box className={imgWrapperClassname}>
-                                    <img draggable="false" src={CardImages[card]} className="card-img" onClick={() => this.handleClickCard(card)}/>
+                <Box className="card-outer-wrapper-box">
+                    <Box className="card-inner-wrapper-box">
+                        {this.props.cards.map(card => {
+        
+                            const selectableImg = this.props.gameStatus === "change" ? 'card-img-wrapper-selectable' : 'card-img-wrapper';
+                            const imgWrapperClassname = this.state.selectedCards.includes(card) && isSelectable ? 'card-img-wrapper-selected' : selectableImg;
+                            
+                            return (
+                                <Box className="card-box">
+                                    <Box className={imgWrapperClassname}>
+                                        <img draggable="false" src={CardImages[card]} className="card-img" onClick={() => this.handleClickCard(card)}/>
+                                    </Box>
                                 </Box>
-                            </Box>
-                        )
-                    })}
+                            )
+                        })}
+                    </Box>
                 </Box>
     
                 <Box className="actions-wrapper-box">

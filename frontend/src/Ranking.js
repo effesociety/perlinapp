@@ -48,7 +48,7 @@ const Ranking = (props) => {
     }
 
     return (
-        <Box className="ranking-wrapper animate__animated animate__slideInRight">
+        <Box className="ranking-wrapper animate__animated animate__slideInLeft">
             <Button startIcon={<CloseIcon />} onClick={handleCloseBtn} className="close-ranking-btn"/>
             <Typography variant="h3" className="ranking-h3">
                 Punteggi utenti

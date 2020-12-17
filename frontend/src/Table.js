@@ -24,30 +24,37 @@ const Table = (props) =>{
 
                     return (
                         <Box className={playerClassName}>
-                            <Typography>{player}</Typography>
+                            <Typography className="player-name-p">{player}</Typography>
                         </Box>
                     )
                 })}
             </Box>
 
-            <Box className="table-cards-wrapper-box">
-                {cards.map(card => {
-                    
-                    return (
-                        <Box className="table-cards-box">
-                            <Box className="table-cards-img-wrapper">
-                                <img draggable="false" src={CardImages[card]} className="table-cards-img "/>
-                            </Box>
-                        </Box>
-                    )
-                })}
+            <Box className="table-cards-outer-wrapper-box">
+                <Box className="table-cards-inner-wrapper-box">
 
-                
-                <Box className="potvalue-box">
-                    <img draggable="false" src={CoinImg} className="potvalue-coin-img"/>
-                    <Typography><b>{props.potValue}</b></Typography>
+
+                    {cards.map(card => {
+                        
+                        return (
+                            <Box className="table-cards-box">
+                                <Box className="table-cards-img-wrapper">
+                                    <img draggable="false" src={CardImages[card]} className="table-cards-img "/>
+                                </Box>
+                            </Box>
+                        )
+                    })}
+
+                    <Box className="flex-break"/>
+                    
+                    <Box className="potvalue-box">
+                        <img draggable="false" src={CoinImg} className="potvalue-coin-img"/>
+                        <Typography><b>{props.potValue}</b></Typography>
+                    </Box>
+
+
+
                 </Box>
-                
 
             </Box>
         </Box>

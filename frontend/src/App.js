@@ -14,19 +14,35 @@ class App extends React.Component{
         this.state = {
             'isPlaying': false,//To decide if the user is playing or not
             'gameInfo': {},  //roomID, username, pocket and position
-            'snackBbarProps': {}
+            'snackBbarProps': {},
+            'isSizeNotAllowed': false
         }
         //Function bindings
         this.handleRoomCreated = this.handleRoomCreated.bind(this);
         this.handleRoomJoined = this.handleRoomJoined.bind(this);
         this.handleError = this.handleError.bind(this);
         this.closeSnackbar = this.closeSnackbar.bind(this);
+        this.handleResize = this.handleResize.bind(this);
   }
 
     componentDidMount(){
         socket.on('created', this.handleRoomCreated);
         socket.on('joined', this.handleRoomJoined);
         socket.on('error', this.handleError);
+        window.addEventListener("resize", this.handleResize);
+        this.handleResize();
+    }
+    
+    handleResize(){
+        const isSizeNotAllowed = window.innerWidth < window.innerHeight;
+        this.setState({
+            'isSizeNotAllowed': isSizeNotAllowed,
+            'isPlaying': false,
+            'gameInfo': {}
+        });    
+        if(isSizeNotAllowed){
+            socket.disconnect();
+        }
     }
 
 
@@ -84,7 +100,7 @@ class App extends React.Component{
     }
     
     render(){
-        if(isMobile){
+        if(isMobile || this.state.isSizeNotAllowed){
             return(
                 <div className="App">
                     <Header/>
