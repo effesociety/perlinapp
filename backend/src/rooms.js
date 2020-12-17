@@ -467,11 +467,12 @@ class Rooms{
         }
 
         const isDraw = topScorers.length > 1 ? true : false;
-        const winner = topScorers.length > 1 ? "" : topScorers[0]
+        const winner = topScorers;
+        //const winner = topScorers.length > 1 ? "" : topScorers[0]
         let winnerCards = [];
         if(!isDraw){
             const potValue = room.gameStatus.potValue;
-            const winnerPlayer =Object.values(room.users).find(u => u.username === winner)
+            const winnerPlayer =Object.values(room.users).find(u => u.username === winner[0])
             winnerCards = winnerPlayer.currentCards;
             winnerPlayer.pocket += parseFloat(potValue);
             room.gameStatus.potValue = 0;
