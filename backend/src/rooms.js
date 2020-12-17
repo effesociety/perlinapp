@@ -57,6 +57,17 @@ class Rooms{
         return data;
     }
 
+    getNoTaxPlayers(roomID){
+        const room = this.getRoom(roomID);
+        let data = [];
+        Object.values(room.users).forEach(user => {
+            if(user.status === 'raise' || user.status === 'call'){
+                data.push(user);
+            }
+        });
+        return data;
+    }
+
     setPlayingThisRound(roomID){
         const room = this.getRoom(roomID);
         let users = this.getOrderedPlayers(roomID, 'play');
@@ -104,6 +115,7 @@ class Rooms{
                         'potValue': 0,
                         'playingThisRound': [],
                         'properties': {
+                            'noTaxPlayers': []
                         }
                     },
                     'users': {
@@ -223,15 +235,23 @@ class Rooms{
         const room = this.getRoom(roomID);
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
-        if(room.gameStatus.potValue !== 0){
-            room.gameStatus.entranceFee = room.gameStatus.properties.currentBet;
-        }
-        //TO-DO: Who partecipated before doesn't have to pay
-        room.gameStatus.properties = {};
+        let noTaxPlayers = [];
+
         for(const user of Object.values(room.users)){
             user.status = "wait";
             user.currentCards = [];
         }
+
+        if(room.gameStatus.properties.isDraw){
+            room.gameStatus.entranceFee = room.gameStatus.properties.currentBet;
+            noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
+            for(const player of noTaxPlayers){
+                player.status = "play";
+            }
+            
+        }
+        
+        room.gameStatus.properties.noTaxPlayers = noTaxPlayers;
     }
 
     calculateScore(cards){
@@ -278,6 +298,8 @@ class Rooms{
         this.setPlayingThisRound(roomID);
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
+        let noTaxPlayers = room.gameStatus.properties.noTaxPlayers.map(user => user.username);
+        
         for(const player of orderedPlayers){
             //Send cards and...
             player.currentCards = [deck[i], deck[i+1], deck[i+2]];
@@ -287,8 +309,11 @@ class Rooms{
             }
             player.ws.emit('cards',JSON.stringify(cardsData));
             //...take money
-            //TO-DO: Handle draw in previous match
-            player.pocket -= parseFloat(room.gameStatus.entranceFee);
+            //Who partecipated before doesn't have to pay
+            if(!noTaxPlayers.includes(player.username)){
+                player.pocket -= parseFloat(room.gameStatus.entranceFee);
+            }
+                        
             room.gameStatus.potValue += parseFloat(room.gameStatus.entranceFee);
             const pocketData = {
                 'pocket': player.pocket
@@ -415,7 +440,6 @@ class Rooms{
         room.gameStatus.currentStatus = 'showdown';
         const scoreOnTheFloor = this.calculateScore(cardsOnTheFloor);      
         let topScorers = [];
-        let topCards = [];
         let isPerlina = false;
         let isTris = false;
         let winnerDifference = 31; //default value for diff
@@ -468,11 +492,12 @@ class Rooms{
 
         const isDraw = topScorers.length > 1 ? true : false;
         const winner = topScorers;
-        //const winner = topScorers.length > 1 ? "" : topScorers[0]
         let winnerCards = [];
+        let noTaxPlayers = [];        
+        
         if(!isDraw){
             const potValue = room.gameStatus.potValue;
-            const winnerPlayer =Object.values(room.users).find(u => u.username === winner[0])
+            const winnerPlayer = Object.values(room.users).find(u => u.username === winner[0])
             winnerCards = winnerPlayer.currentCards;
             winnerPlayer.pocket += parseFloat(potValue);
             room.gameStatus.potValue = 0;
@@ -486,6 +511,10 @@ class Rooms{
             }
             this.sendAll(roomID, 'potValueUpdate', potValueUpdateData);
         }
+        else{
+            noTaxPlayers = this.getNoTaxPlayers(roomID);
+        }
+        
         const currentBet = room.gameStatus.properties.currentBet;
 
         room.gameStatus.properties = {
@@ -493,6 +522,7 @@ class Rooms{
             'isDraw': isDraw,
             'winner': winner,
             'winnerCards': winnerCards,
+            'noTaxPlayers': noTaxPlayers,
             'currentBet': currentBet
         }
     }
