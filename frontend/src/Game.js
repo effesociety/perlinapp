@@ -23,7 +23,10 @@ class Game extends Component{
             'turnPlayer': "",
             'startBtnsDisabled': false,
             'ranking': [],
-            'showRanking': false
+            'showRanking': false,
+            'isDraw': false,
+            'fee': 0,
+            'drawAction': 'pay'
         }
         this.handleNewPositions = this.handleNewPositions.bind(this);
         this.handlePocketUpdate = this.handlePocketUpdate.bind(this);
@@ -39,6 +42,8 @@ class Game extends Component{
         this.handleRankingUpdate = this.handleRankingUpdate.bind(this);
         this.renderRanking = this.renderRanking.bind(this);
         this.setRankingBtn = this.setRankingBtn.bind(this);
+        this.renderPlayRound = this.renderPlayRound.bind(this);
+        this.handleDrawInfo = this.handleDrawInfo.bind(this);
     }
 
     componentDidMount(){  
@@ -50,6 +55,7 @@ class Game extends Component{
         socket.on('status', this.handleStatus);
         socket.on('turn', this.handleTurn);
         socket.on('rankingUpdate', this.handleRankingUpdate);
+        socket.on('drawInfo', this.handleDrawInfo)
     }
 
     handleNewPositions(json){
@@ -76,12 +82,7 @@ class Game extends Component{
     }
 
     handlePotValueUpdate(json){
-        console.log("gotPotValueUpdate")
-        
         const data = JSON.parse(json);
-
-        console.log(data);
-
         this.setState({
             'potValue': data.potValue
         })
@@ -118,7 +119,7 @@ class Game extends Component{
                 this.handleStatusChange(data.numChangeableCards);
                 break;
             case 'bet':
-                this.handleStatusBet(data.currentBet, data.betUser);
+                this.handleStatusBet(data.currentBet, data.betUser, data.action, data.actionUser);
                 break;
             case 'showdown':
                 this.handleStatusShowdown(data.isDraw, data.winner, data.winnerCards);
@@ -135,14 +136,19 @@ class Game extends Component{
         }
         this.setState({
             'gameStatus': 'change',
-            'gameStatusProps': nextGameStatusProps
+            'gameStatusProps': nextGameStatusProps,
+            'isDraw': false,
+            'fee': 0,
+            'drawAction': 'pay'
         })
     }
 
-    handleStatusBet(currentBet, betUser){
+    handleStatusBet(currentBet, betUser, action, actionUser){
         const nextGameStatusProps = {
             'currentBet': currentBet,
-            'betUser': betUser
+            'betUser': betUser,
+            'action': action,
+            'actionUser': actionUser
         }
         this.setState({
             'gameStatus': 'bet',
@@ -184,13 +190,15 @@ class Game extends Component{
         if(data.turn === this.props.username){
             this.setState({
                 'isMyTurn': true,
-                'turnPlayer': data.turn
+                'turnPlayer': data.turn,
+                'remainingTime': parseInt(data.remainingTime)
             })
         }
         else{
             this.setState({
                 'isMyTurn': false,
-                'turnPlayer': data.turn
+                'turnPlayer': data.turn,
+                'remainingTime': -1
             })
         }
     }
@@ -226,6 +234,69 @@ class Game extends Component{
         }
     }
 
+    handleDrawInfo(json){
+        const data = JSON.parse(json);
+        const startBtnDisabled = data.action === "free" ? true : false;
+        this.setState({
+            'isDraw': true,
+            'fee': data.fee,
+            'drawAction': data.action,
+            'startBtnsDisabled': startBtnDisabled
+        })
+    }
+
+    renderPlayRound(){
+        let drawMsg;
+        if(this.state.isDraw && this.state.drawAction === "free" ){
+            drawMsg = (
+                <Typography variant="h5" align="center">
+                    Il turno precedente è terminato in pareggio, tu non devi pagare nulla per giocare questo turno
+                </Typography>
+            )
+        }
+        else if(this.state.isDraw && this.state.drawAction === "pay"){
+            drawMsg = (
+                <Typography variant="h5" align="center">
+                    Il turno precedente è terminato in pareggio, se vuoi giocare questo round la tariffa di ingresso è <b>{this.state.fee}</b>
+                </Typography>
+            )
+        }
+
+        if(this.state.gameStatus === "stop"){
+            return (
+                <Box className="outer-wrapper">
+                    <Box className="inner-wrapper">
+                        <Card className="inner-wrapper-card animate__animated animate__slideInUp">
+                            <CardContent className="inner-wrapper-card-content">
+                                <Typography variant="h4" align="center" gutterBottom>
+                                    Codice Room: <b>{this.props.roomID}</b>
+                                </Typography>
+                                {drawMsg}
+                            </CardContent>
+                        </Card>
+                        <Box className="flex-break"/>
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            className="inner-wrapper-btn animate__animated animate__slideInUp" 
+                            disabled={this.state.startBtnsDisabled} 
+                            onClick={() => this.handleStart('play')}>
+                                Partecipa
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            className="inner-wrapper-btn animate__animated animate__slideInUp" 
+                            disabled={this.state.startBtnsDisabled} 
+                            onClick={() => this.handleStart('skip')}>
+                                Skip
+                        </Button>
+                    </Box>
+                </Box>
+            )
+        }
+    }
+
     render(){
 
         if(this.state.gameStatus === "stop"){
@@ -238,36 +309,7 @@ class Game extends Component{
         return (
             <Box>
 
-                {this.state.gameStatus === "stop" && (
-                    <Box className="outer-wrapper">
-                        <Box className="inner-wrapper">
-                            <Card className="inner-wrapper-card animate__animated animate__slideInUp">
-                                <CardContent>
-                                    <Typography variant="h4" align="center">
-                                        Codice Room: <b>{this.props.roomID}</b>
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                            <Box className="flex-break"/>
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                className="inner-wrapper-btn animate__animated animate__slideInUp" 
-                                disabled={this.state.startBtnsDisabled} 
-                                onClick={() => this.handleStart('play')}>
-                                    Partecipa
-                            </Button>
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                className="inner-wrapper-btn animate__animated animate__slideInUp" 
-                                disabled={this.state.startBtnsDisabled} 
-                                onClick={() => this.handleStart('skip')}>
-                                    Skip
-                            </Button>
-                        </Box>
-                    </Box>
-                )}
+                {this.renderPlayRound()}
 
                 <Box className="game-container">
 
@@ -276,6 +318,8 @@ class Game extends Component{
                             cards={this.state.tableCards} 
                             players={this.state.players} 
                             potValue={this.state.potValue}
+                            gameStatus={this.state.gameStatus} 
+                            gameStatusProps={this.state.gameStatusProps} 
                         />
                     </Box>
                     <Box className="cards-box-container">
@@ -288,6 +332,7 @@ class Game extends Component{
                             roomID={this.props.roomID}
                             pocket={this.state.pocket}
                             minBet={this.props.minBet}
+                            remainingTime={this.state.remainingTime}
                         />
                     </Box>
 

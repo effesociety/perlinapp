@@ -26,9 +26,6 @@ class Footer extends React.Component{
                     <GitHub onMouseEnter={this.toggleGithub} onMouseLeave={this.toggleGithub} style={{opacity: this.state.opacity, fontSize:"50px",transition: "all 0.15s linear 0s"}}/>
                     </Link>
                 </Box>
-                <Typography variant="subtitle1" align="center" noWrap style={{fontSize:"1rem"}}>
-                    Made with <Favorite fontSize="small" color="secondary" /> by Capone Daniele and Delicato Angelo 
-                </Typography>
             </footer>
         )
     }

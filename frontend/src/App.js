@@ -22,18 +22,17 @@ class App extends React.Component{
         this.handleRoomJoined = this.handleRoomJoined.bind(this);
         this.handleError = this.handleError.bind(this);
         this.closeSnackbar = this.closeSnackbar.bind(this);
-        this.handleResize = this.handleResize.bind(this);
+        this.handleSize = this.handleSize.bind(this);
   }
 
     componentDidMount(){
         socket.on('created', this.handleRoomCreated);
         socket.on('joined', this.handleRoomJoined);
         socket.on('error', this.handleError);
-        window.addEventListener("resize", this.handleResize);
-        this.handleResize();
+        this.handleSize();
     }
     
-    handleResize(){
+    handleSize(){
         const isSizeNotAllowed = window.innerWidth < window.innerHeight;
         if(isSizeNotAllowed){
             this.setState({

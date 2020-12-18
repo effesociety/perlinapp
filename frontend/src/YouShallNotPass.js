@@ -6,7 +6,7 @@ const YouShallNotPass = (props) => {
             <Typography variant="h2" className="you-shall-not-pass-h2">
                 Ci dispiace! <br/><br/>
                 Quest'app non è disponibile per questo dispositivo <br/>
-                (Se sei da computer prova impostare a impostare il browser a schermo intero)
+                (Se sei da computer prova impostare a impostare il browser a schermo intero e a ricaricare la pagina)
             </Typography>
         </Box>
 

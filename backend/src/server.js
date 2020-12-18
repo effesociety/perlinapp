@@ -141,20 +141,6 @@ io.on('connection',(socket) => {
 				io.to(socket.roomID).emit('tableCards', JSON.stringify(data));
 				//Go to next state
 				rooms.startChangeRound(socket.roomID);
-				const numChangeableCards = room.gameStatus.properties.numChangeableCards;
-				const statusData = {
-					'status': 'change',
-					'numChangeableCards': numChangeableCards
-				}
-				io.to(socket.roomID).emit('status', JSON.stringify(statusData));
-				//Find first player that has to change
-				const firstPlayer = rooms.getOrderedPlayers(socket.roomID, 'play')[0];
-				const turnData = {
-					'turn': firstPlayer.username
-				}
-				console.log("The first player that has to change is")
-				console.log(turnData);
-				io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
 			}
 		}
 	})
@@ -181,9 +167,11 @@ io.on('connection',(socket) => {
 					const nextUserPosition = room.gameStatus.properties.currentUserPosition
 					const nextPlayer = room.gameStatus.playingThisRound[nextUserPosition];
 					const turnData = {
-						'turn': nextPlayer
+						'turn': nextPlayer,
+						'remainingTime': room.gameProperties.waitingTime
 					}
 					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
+					rooms.startCountdown(socket.roomID, nextPlayer);					
 				}
 			}
 		}
@@ -203,15 +191,6 @@ io.on('connection',(socket) => {
 				console.log("Received bet message");
 				rooms.handleBet(socket.roomID, socket.userID, data);
 
-				if(data.action === "raise"){
-					const statusData = {
-						'status': 'bet',
-						'currentBet': room.gameStatus.properties.currentBet,
-						'betUser': room.gameStatus.properties.betUser
-					}
-					io.to(socket.roomID).emit('status', JSON.stringify(statusData));
-				}
-
 				//Check if the bet round is over and go to next state
 				const numFoldedPlayers = rooms.getStatusPlayers(socket.roomID, "fold").length;
 				const numCalledPlayers = rooms.getStatusPlayers(socket.roomID, "call").length;
@@ -230,9 +209,11 @@ io.on('connection',(socket) => {
 					const nextUserPosition = room.gameStatus.properties.currentUserPosition
 					const nextPlayer = room.gameStatus.playingThisRound[nextUserPosition];
 					const turnData = {
-						'turn': nextPlayer
+						'turn': nextPlayer,
+						'remainingTime': room.gameProperties.waitingTime
 					}
 					io.to(socket.roomID).emit('turn', JSON.stringify(turnData));
+					rooms.startCountdown(socket.roomID, nextPlayer);					
 				}
 			}
 
@@ -275,7 +256,7 @@ app.get('/rooms', (req, res) => {
 		let users = {};
 		const oldUsers = rooms.data[room].users;
 		for(const user of Object.keys(oldUsers)){
-			users[user] = Object.assign({},oldUsers[user], {'ws': 'Something veeery long'});
+			users[user] = Object.assign({},oldUsers[user], {'ws': 'Something veeery long', 'countdown': 'Something veeery long too'});
 		}
 		clonedRooms[room] = {
 			'gameProperties': gameProperties,

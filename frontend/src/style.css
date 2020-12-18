@@ -63,6 +63,10 @@ Game.js
     margin-left:20px;
 }
 
+.inner-wrapper-card-content{
+    max-width: 425px;
+}
+
 .inner-wrapper-btn{
     width:200px;
     height:80px;
@@ -100,6 +104,7 @@ Game.js
 }
 
 .potvalue-box{
+    width: calc(18vh - 46.8px);
     margin:auto;
     color: #fff;
     display: inline-flex;
@@ -208,27 +213,27 @@ Game.js
 }
 
 .players-position-1{
-    top: calc(14vh - 36.4px);
-    left: calc(50% + 20vh - 52px);
-    transform: rotate(35deg)
+    top: calc(13vh - 33.8px);
+    left: calc(50% - 19vh + 49.4px - 9vh + 23.4px);
+    transform: rotate(325deg)
 }
 
 .players-position-2{
     top: calc(34vh - 88.4px);
-    left: calc(50% + 34.5vh - 89.7px);
-    transform: rotate(70deg)
+    left: calc(50% - 34.5vh + 89.7px - 9vh + 23.4px);
+    transform: rotate(290deg)
 }
 
 .players-position-3{
     top: calc(58.5vh - 152px);
-    left: calc(50% + 34.5vh - 89.7px);
-    transform: rotate(110deg)
+    left: calc(50% - 34.5vh + 89.7px - 9vh + 23.4px);
+    transform: rotate(250deg)
 }
 
 .players-position-4{
     top:calc(80vh - 208px);
-    left: calc(50% + 20vh - 52px);
-    transform: rotate(150deg)
+    left: calc(50% - 20vh + 52px - 9vh + 23.4px);
+    transform: rotate(210deg)
 }
 
 .players-position-5{
@@ -239,26 +244,42 @@ Game.js
 
 .players-position-6{
     top:calc(80vh - 208px);
-    left: calc(50% - 20vh + 52px - 9vh + 23.4px);
-    transform: rotate(210deg)
+    left: calc(50% + 20vh - 52px);
+    transform: rotate(150deg)
 }
 
 .players-position-7{
     top: calc(58.5vh - 152px);
-    left: calc(50% - 34.5vh + 89.7px - 9vh + 23.4px);
-    transform: rotate(250deg)
+    left: calc(50% + 34.5vh - 89.7px);
+    transform: rotate(110deg)
 }
 
 .players-position-8{
     top: calc(34vh - 88.4px);
-    left: calc(50% - 34.5vh + 89.7px - 9vh + 23.4px);
-    transform: rotate(290deg)
+    left: calc(50% + 34.5vh - 89.7px);
+    transform: rotate(70deg)
 }
 
 .players-position-9{
-    top: calc(13vh - 33.8px);
-    left: calc(50% - 19vh + 49.4px - 9vh + 23.4px);
-    transform: rotate(325deg)
+    top: calc(14vh - 36.4px);
+    left: calc(50% + 20vh - 52px);
+    transform: rotate(35deg)
+}
+
+.player-status-green{
+    margin-top:-5px;
+    margin-left:-5px;
+    border: 5px solid rgb(41, 182, 41);
+}
+
+.player-status-red{
+    margin-top:-5px;
+    margin-left:-5px;
+    border: 5px solid rgb(231, 57, 57);
+}
+
+.player-status-white{
+
 }
 
 .card-outer-wrapper-box{
@@ -356,6 +377,7 @@ Game.js
     position:fixed!important;
     bottom:50px;
     left:50px;
+    z-index: 9999;
 }
 
 .show-ranking-btn .MuiButton-startIcon{
@@ -372,6 +394,7 @@ Game.js
     background-color: #3f51b5;
     text-align:center;
     overflow-y: auto;
+    z-index: 9999;
 }
 
 .ranking-card{

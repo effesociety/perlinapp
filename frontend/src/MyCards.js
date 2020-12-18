@@ -11,7 +11,9 @@ class MyCards extends React.Component{
         this.state = {
             'cards': [],
             'selectedCards': [],
-            'isRaiseAllowed': false
+            'isRaiseAllowed': false,
+            'countdownValue': -1,
+            'showCountdown': false
         }
         this.betValue = React.createRef();
         //Function bindings
@@ -20,6 +22,30 @@ class MyCards extends React.Component{
         this.handleBet = this.handleBet.bind(this);
         this.handleTextfieldChange = this.handleTextfieldChange.bind(this);
     }
+
+    
+    componentDidUpdate(prevProps){
+        if(!prevProps.isMyTurn && this.props.isMyTurn){
+            this.setState({
+                'countdownValue': this.props.remainingTime,
+                'showCountdown': true
+            })
+            const interval = setInterval(() => {
+                if(this.state.countdownValue > 0){
+                    this.setState({
+                        'countdownValue': this.state.countdownValue - 1,
+                    });
+                }
+                else{
+                    this.setState({
+                        'showCountdown': false
+                    });
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+    }
+    
 
     handleClickCard(card){
         if(this.props.gameStatus && this.props.gameStatus === "change" && this.props.gameStatusProps.numChangeableCards && this.props.isMyTurn){
@@ -141,12 +167,21 @@ class MyCards extends React.Component{
                         </Box>
                     </Box>
                 )}
-    
 
                 {this.props.gameStatus && (this.props.gameStatus === "change" || this.props.gameStatus === "bet") && this.props.isMyTurn && (
-                    <Typography variant="h4" className="my-cards-h4" align="center">
-                    È il <b>tuo </b>turno
-                    </Typography>
+                    <Box>
+                        {this.state.showCountdown && (
+                            <Box>
+                                <Typography variant="h2" align="center" className="my-cards-h2">
+                                    {this.state.countdownValue}
+                                </Typography>
+                            </Box>
+                        )}
+                        <Typography variant="h4" className="my-cards-h4" align="center">
+                        È il <b>tuo </b>turno
+                        </Typography>
+                    </Box>
+
                 )}
                 {this.props.gameStatus && (this.props.gameStatus === "change" || this.props.gameStatus === "bet") && !this.props.isMyTurn && (
                     <Typography variant="h4" className="my-cards-h4" align="center">

@@ -12,8 +12,6 @@ const Ranking = (props) => {
 
     const renderRankInfo = () => {
         if(props.users.length > 0){
-            console.log(props)
-
             const ranking = Object.values(props.users).map(u => {
                 const statusIcon = u.pocket >= 0 ? (<KeyboardArrowUpIcon className="ranking-status-green"/>) : (<KeyboardArrowDownIcon className="ranking-status-red"/>)
                 const playerClassname = u.active ? "ranking-player ranking-active-player" : "ranking-player ranking-inactive-player";
