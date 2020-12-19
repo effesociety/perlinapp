@@ -50,6 +50,28 @@ class Rooms{
         return orderedPlayers;
     }
 
+    fixUserPosition(roomID){
+        const room = this.getRoom(roomID);
+        const numRoundPlayed = room.gameStatus.numRoundPlayed;
+
+        let users = this.getOrderedPlayers(roomID, 'play');
+        let newPosition = 1;
+        
+        if(numRoundPlayed === 0){
+            this.setPlayingThisRound(roomID);     
+        }
+        else if(numRoundPlayed > 0){
+            let temp = users.splice(1);
+            let newOrderedPlayers = temp.concat(users);
+            
+            newOrderedPlayers.forEach(user => {
+                user.position = newPosition;
+                newPosition +=1;
+                room.gameStatus.playingThisRound.push(user.username);
+            });  
+        }      
+    }
+
     setPlayingThisRound(roomID){
         const room = this.getRoom(roomID);
         let users = this.getStatusPlayers(roomID, 'play');
@@ -94,6 +116,7 @@ class Rooms{
                         'entranceFee': parseFloat(minBet),
                         'currentStatus': 'stop',
                         'deck': null,
+                        'numRoundPlayed': 0,
                         'potValue': 0,
                         'playingThisRound': [],
                         'properties': {
@@ -360,6 +383,7 @@ class Rooms{
         const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
+        room.gameStatus.numRoundPlayed +=1;
 
         room.gameStatus.entranceFee = room.gameStatus.properties.isDraw ? room.gameStatus.properties.currentBet : room.gameProperties.minBet;
 
@@ -448,7 +472,9 @@ class Rooms{
         room.gameStatus.deck = shuffleArray(deck);
         //Dealing cards
         //room.gameStatus.playingThisRound = this.getStatusPlayers(roomID, 'play');
-        this.setPlayingThisRound(roomID);
+        //this.setPlayingThisRound(roomID);
+        this.fixUserPosition(roomID);
+        
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
         const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
