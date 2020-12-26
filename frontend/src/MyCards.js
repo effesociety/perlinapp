@@ -49,7 +49,7 @@ class MyCards extends React.Component{
         //Clear countdown interval
         if(prevProps.isMyTurn && !this.props.isMyTurn){
             clearInterval(this.state.countdownInterval);
-            this.setState('countdownInterval': null);
+            this.setState({'countdownInterval': null});
         }
     }
     
