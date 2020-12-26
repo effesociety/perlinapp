@@ -46,38 +46,20 @@ class Rooms{
     
     getOrderedPlayers(roomID, status){
         const playersByStatus = Object.values(this.data[roomID].users).filter(user => user.active && user.status === status);
-        const orderedPlayers = playersByStatus.sort((a,b) => parseInt(a.position) - parseInt(b.position));
+        let orderedPlayers = playersByStatus.sort((a,b) => parseInt(a.position) - parseInt(b.position));
         return orderedPlayers;
-    }
-
-    fixUserPosition(roomID){
-        const room = this.getRoom(roomID);
-        const numRoundPlayed = room.gameStatus.numRoundPlayed;
-
-        let users = this.getOrderedPlayers(roomID, 'play');
-        let newPosition = 1;
-        
-        if(numRoundPlayed === 0){
-            this.setPlayingThisRound(roomID);     
-        }
-        else if(numRoundPlayed > 0){
-            let temp = users.splice(1);
-            let newOrderedPlayers = temp.concat(users);
-            
-            newOrderedPlayers.forEach(user => {
-                user.position = newPosition;
-                newPosition +=1;
-                room.gameStatus.playingThisRound.push(user.username);
-            });  
-        }      
     }
 
     setPlayingThisRound(roomID){
         const room = this.getRoom(roomID);
-        let users = this.getStatusPlayers(roomID, 'play');
-        users.forEach(user => {
-            room.gameStatus.playingThisRound.push(user.username);
-        })
+        let users = this.getStatusPlayers(roomID, 'play');      
+
+        room.gameStatus.playingThisRound = users.map(u => u.username);
+        const firstUserIndex =  room.gameStatus.playingThisRound.findIndex(u => u === room.gameStatus.currentFirstUser);
+        for(let i = 0; i < firstUserIndex; i++){
+                const removedEl = room.gameStatus.playingThisRound.splice(0,1)[0];
+                room.gameStatus.playingThisRound.push(removedEl);
+        }
     }
 
     getTableCards(roomID){
@@ -115,8 +97,8 @@ class Rooms{
                     'gameStatus': {
                         'entranceFee': parseFloat(minBet),
                         'currentStatus': 'stop',
+                        'currentFirstUser': null,
                         'deck': null,
-                        'numRoundPlayed': 0,
                         'potValue': 0,
                         'playingThisRound': [],
                         'properties': {
@@ -129,6 +111,8 @@ class Rooms{
                 };
                 //Add the first player
                 res = this.addPlayer(roomID, firstPlayerUsername, firstPlayerWs);
+                //Set currentFirstUser when room is created
+                this.data[roomID].gameStatus.currentFirstUser = res.username;
             }
         }   
         while(duplicate);
@@ -383,7 +367,6 @@ class Rooms{
         const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
         room.gameStatus.currentStatus = "stop";
         room.gameStatus.playingThisRound = [];
-        room.gameStatus.numRoundPlayed +=1;
 
         room.gameStatus.entranceFee = room.gameStatus.properties.isDraw ? room.gameStatus.properties.currentBet : room.gameProperties.minBet;
 
@@ -392,7 +375,7 @@ class Rooms{
             user.currentCards = [];
         }
         
-        if(noTaxPlayers.length === this.getActivePlayers(roomID).length){
+        if(room.gameStatus.properties.isDraw && noTaxPlayers.length === this.getActivePlayers(roomID).length){
             this.roundSetup(roomID);
             const tableCards = this.getTableCards(roomID);
             const data = {
@@ -423,12 +406,20 @@ class Rooms{
                 'status': 'stop',
             }
             console.log(statusData);
+            this.setNextCurrentFirstUser(roomID);
             this.sendAll(roomID, 'status', statusData);
         }
 
         room.gameStatus.properties = {
             'noTaxPlayers': noTaxPlayers
         }
+    }
+
+    setNextCurrentFirstUser(roomID){
+        const room = this.getRoom(roomID);
+        const activePlayers = this.getActivePlayers(roomID);
+        const currentFirstUserIndex = activePlayers.findIndex(u => u.username === room.gameStatus.currentFirstUser);
+        room.gameStatus.currentFirstUser = currentFirstUserIndex + 1 < activePlayers.length ? activePlayers[currentFirstUserIndex + 1].username : activePlayers[0].username;
     }
 
     calculateScore(cards){
@@ -472,9 +463,7 @@ class Rooms{
         room.gameStatus.deck = shuffleArray(deck);
         //Dealing cards
         //room.gameStatus.playingThisRound = this.getStatusPlayers(roomID, 'play');
-        //this.setPlayingThisRound(roomID);
-        this.fixUserPosition(roomID);
-        
+        this.setPlayingThisRound(roomID);
         const orderedPlayers = this.getOrderedPlayers(roomID, 'play');
         let i = 3;
         const noTaxPlayers = room.gameStatus.properties.noTaxPlayers;
@@ -521,15 +510,17 @@ class Rooms{
         }
         this.sendAll(roomID, 'status', statusData);
         //Find first player that has to change
-        const firstPlayer = this.getOrderedPlayers(roomID, 'play')[0];
+        
+        //const firstPlayer = this.getOrderedPlayers(roomID, 'play')[0];
+        const firstPlayer = room.gameStatus.playingThisRound[0];
         const turnData = {
-            'turn': firstPlayer.username,
+            'turn': firstPlayer,
             'remainingTime': room.gameProperties.waitingTime
         }
         console.log("The first player that has to change is")
         console.log(turnData);
         this.sendAll(roomID, 'turn', turnData);
-        this.startCountdown(roomID, firstPlayer.username);
+        this.startCountdown(roomID, firstPlayer);
     }
 
     changeCards(roomID, userID, cards){
@@ -584,13 +575,14 @@ class Rooms{
         }
         this.sendAll(roomID, 'status', statusData);
         //Find first player that has to bet
-        const firstPlayer = this.getOrderedPlayers(roomID, 'change')[0];
+        //const firstPlayer = this.getOrderedPlayers(roomID, 'change')[0];
+        const firstPlayer = room.gameStatus.playingThisRound[0];
         const turnData = {
-            'turn': firstPlayer.username,
+            'turn': firstPlayer,
             'remainingTime': room.gameProperties.waitingTime
         }
         this.sendAll(roomID, 'turn', turnData);
-        this.startCountdown(roomID, firstPlayer.username);
+        this.startCountdown(roomID, firstPlayer);
     }
 
     handleBet(roomID, userID, data){

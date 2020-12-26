@@ -13,7 +13,8 @@ class MyCards extends React.Component{
             'selectedCards': [],
             'isRaiseAllowed': false,
             'countdownValue': -1,
-            'showCountdown': false
+            'showCountdown': false,
+            'countdownInterval': null,
         }
         this.betValue = React.createRef();
         //Function bindings
@@ -40,9 +41,15 @@ class MyCards extends React.Component{
                     this.setState({
                         'showCountdown': false
                     });
-                    clearInterval(interval);
                 }
             }, 1000);
+            this.setState({'countdownInterval': interval});
+        }
+
+        //Clear countdown interval
+        if(prevProps.isMyTurn && !this.props.isMyTurn){
+            clearInterval(this.state.countdownInterval);
+            this.setState('countdownInterval': null);
         }
     }
     
